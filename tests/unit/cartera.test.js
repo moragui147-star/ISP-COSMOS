@@ -28,6 +28,11 @@ function armar({ contratos = [], facturas = {}, config = {}, red } = {}) {
   return { servicio, repo, controladorRed, notificador, auditoria, cfg, ordenes, contratos };
 }
 
+const invariante = (contratos) => contratos.forEach((c) => {
+  expect(Number.isInteger(c.periodosDeuda)).toBe(true);
+  expect(c.periodosDeuda).toBeGreaterThanOrEqual(0);
+  expect(c.periodosDeuda).toBeLessThanOrEqual(2);
+});
 
 describe('ejecutarCorteMensual() – caminos básicos', () => {
   test('C1 / CP-35: periodo ya procesado → no cambia nada (idempotencia, CA-10)', async () => {
@@ -120,5 +125,63 @@ describe('ejecutarCorteMensual() – caminos básicos', () => {
     const t = armar({ contratos: [c], facturas: { 1: { estado: 'Vencida', vence: '2026-10-01' } }, red });
     await t.servicio.ejecutarCorteMensual(FECHA_CORTE);
     expect(t.auditoria.registrar).toHaveBeenCalledWith('Error de red en corte', 'CT-007: DESCONOCIDO');
+  });
+});
+
+describe('ejecutarCorteMensual() – fronteras, tipos e invariante', () => {
+  test('CP-42: fecha de corte igual al límite de gracia no incrementa; el día siguiente sí', async () => {
+    const f = { estado: 'Vencida', vence: '2026-10-01' };
+    const a = contrato();
+    await armar({ contratos: [a], facturas: { 1: f } }).servicio.ejecutarCorteMensual('2026-10-04');
+    expect(a.periodosDeuda).toBe(0);
+    const b = contrato();
+    await armar({ contratos: [b], facturas: { 1: f } }).servicio.ejecutarCorteMensual('2026-10-05');
+    expect(b.periodosDeuda).toBe(1);
+  });
+
+  test.each([
+    [undefined, 1, 'Suspendido por mora'],
+    [null, 1, 'Suspendido por mora'],
+    ['1', 2, 'Cancelado'],
+    [1.5, 2, 'Cancelado'],
+    [-1, 1, 'Suspendido por mora'],
+    [Infinity, 2, 'Cancelado'],
+    [Number.MAX_SAFE_INTEGER, 2, 'Cancelado'],
+  ])('CP-43: periodosDeuda = %p sin pago → %p (%s)', async (entrada, esperado, estado) => {
+    const c = contrato({ periodosDeuda: entrada });
+    const t = armar({ contratos: [c], facturas: { 1: { estado: 'Vencida', vence: '2026-10-01' } } });
+    const r = await t.servicio.ejecutarCorteMensual(FECHA_CORTE);
+    expect(c.periodosDeuda).toBe(esperado);
+    expect(c.estado).toBe(estado);
+    expect(r.anomalias).toBe(1);
+    invariante([c]);
+  });
+
+  test('CA-07: invariante 0 ≤ periodosDeuda ≤ 2 tras el corte en un lote mixto', async () => {
+    const lista = [
+      contrato({ id: 1, periodosDeuda: undefined }),
+      contrato({ id: 2, periodosDeuda: '1' }),
+      contrato({ id: 3, periodosDeuda: 0 }),
+      contrato({ id: 4, periodosDeuda: 7 }),
+    ];
+    const t = armar({
+      contratos: lista,
+      facturas: {
+        1: { estado: 'Vencida', vence: '2026-10-01' },
+        2: { estado: 'Pagada', vence: '2026-10-01' },
+        3: { estado: 'Pendiente', vence: '2026-10-05' },
+        4: { estado: 'Vencida', vence: '2026-10-01' },
+      },
+    });
+    await t.servicio.ejecutarCorteMensual(FECHA_CORTE);
+    invariante(lista);
+  });
+
+  test('Ciclo: 500 contratos se evalúan una sola vez cada uno', async () => {
+    const lista = Array.from({ length: 500 }, (_, i) => contrato({ id: i + 1, num: `CT-${i + 1}` }));
+    const t = armar({ contratos: lista });
+    const r = await t.servicio.ejecutarCorteMensual(FECHA_CORTE);
+    expect(r.evaluados).toBe(500);
+    expect(t.repo.facturaDelPeriodo).toHaveBeenCalledTimes(500);
   });
 });
