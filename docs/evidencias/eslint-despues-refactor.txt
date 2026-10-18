@@ -1,0 +1,1 @@
+ESLint: 0 problemas (complexity ≤ 10, no-unreachable, no-unused-vars)
