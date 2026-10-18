@@ -1,0 +1,4 @@
+app/js/servicios/cartera.js
+  18:3  error  Async function 'ejecutarCorteMensual' has a complexity of 13. Maximum allowed is 10  complexity
+
+✖ 1 problem (1 error, 0 warnings)

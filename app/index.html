@@ -316,6 +316,7 @@ textarea{resize:vertical;min-height:80px;}
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="js/firebase-config.js"></script>
+<script type="module" src="js/app-modulos.js"></script>
 <script>
 // La configuración de Firebase se carga desde js/firebase-config.js (fuera del repositorio)
 const firebaseConfig = window.firebaseConfig;
@@ -323,7 +324,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // Campos de S que se guardan/leen en Firestore (todo excepto sesión/UI)
-const PERSISTED_KEYS = ['planes','contratos','facturas','pagos','tickets','audit','config','users','nextIds','cierreHoy'];
+const PERSISTED_KEYS = ['planes','contratos','facturas','pagos','tickets','audit','config','users','nextIds','cierreHoy','ordenesRetiro'];
 const STATE_DOC = db.collection('isp_data').doc('main');
 
 // Carga el estado desde Firestore. Si el documento no existe (primera vez),
@@ -359,7 +360,7 @@ const S = {
   user: null,
   activeView: '',
   config: {
-    porcMora:5, diasGracia:3, horarioCorte:'00:00',
+    porcMora:5, diasGracia:3, horarioCorte:'00:00', ultimoCorte:null,
     nit:'900.123.456-7', empresa:'Master-Telecomuni', emailRecuperacion:'', logoBase64:''
   },
   planes:[
@@ -406,6 +407,7 @@ const S = {
   ],
   nextIds:{contrato:7,factura:10,pago:5,ticket:3,plan:6},
   cierreHoy:false,
+  ordenesRetiro:[],
   users:[
     {u:'admin',p:'admin123',rol:'admin',nombre:'Administrador'},
   ]
@@ -884,7 +886,7 @@ function guardarContrato(id){
   } else {
     const newId=S.nextIds.contrato++;
     const num=`CT-${String(newId).padStart(3,'0')}`;
-    S.contratos.push({id:newId,num,cedula:ced,nombre:n,dir,apto,tel,email,planId,mac:'',estado:'Pendiente de instalación',fecha:today(),pass,mikrotikIp,mikrotikUser,mikrotikPass,mikrotikInterface,proximoVencimiento:addDias(today(),30)});
+    S.contratos.push({id:newId,num,cedula:ced,nombre:n,dir,apto,tel,email,planId,mac:'',estado:'Pendiente de instalación',periodosDeuda:0,fecha:today(),pass,mikrotikIp,mikrotikUser,mikrotikPass,mikrotikInterface,proximoVencimiento:addDias(today(),30)});
     addAudit('Nuevo contrato',`${num} — ${n}`);
     toast(`Contrato ${num} creado. Registre la MAC para activar.`,'success');
   }
@@ -997,7 +999,7 @@ function procesarArchivoCargaMasiva(){
 
         const newId=S.nextIds.contrato++;
         const num=`CT-${String(newId).padStart(3,'0')}`;
-        S.contratos.push({id:newId,num,cedula,nombre,dir:direccion,apto,tel:telefono,email,planId:plan.id,mac:'',estado:'Pendiente de instalación',fecha:fechaInicio,pass,mikrotikIp,mikrotikUser,mikrotikPass,mikrotikInterface,proximoVencimiento:addDias(fechaInicio,30)});
+        S.contratos.push({id:newId,num,cedula,nombre,dir:direccion,apto,tel:telefono,email,planId:plan.id,mac:'',estado:'Pendiente de instalación',periodosDeuda:0,fecha:fechaInicio,pass,mikrotikIp,mikrotikUser,mikrotikPass,mikrotikInterface,proximoVencimiento:addDias(fechaInicio,30)});
         creados++;
       });
       if(creados>0) addAudit('Carga masiva de contratos',`${creados} contrato(s) creado(s) desde archivo "${file.name}".`);
@@ -1610,6 +1612,67 @@ function generarCierre(){
 }
 
 // ═══════════════════════════════ CARTERA VENCIDA ═══════════════════════════════
+// ═══════════════ CORTE MENSUAL DE CARTERA (SCRUM-14) ═══════════════
+// Adaptadores que conectan ServicioCartera (js/servicios/cartera.js) con el estado S.
+function crearAdaptadoresCartera(){
+  return {
+    repo:{
+      contratosEn:(estados)=>S.contratos.filter(c=>estados.includes(c.estado)),
+      // Última factura del contrato cuya fecha de vencimiento ya llegó a la fecha de corte.
+      facturaDelPeriodo:(c,fechaCorte)=>{
+        const fs=S.facturas.filter(f=>f.cId===c.id&&f.vence<=fechaCorte).sort((x,y)=>y.vence.localeCompare(x.vence));
+        return fs[0]||null;
+      },
+      crearOrdenRetiro:(c,fechaLimite)=>{
+        S.ordenesRetiro.push({id:Date.now()+S.ordenesRetiro.length,cId:c.id,num:c.num,fechaLimite,estado:'Pendiente'});
+      },
+      guardar:()=>saveState(),
+    },
+    // IControladorRed: deja la instrucción para el Mikrotik (mismo mecanismo de v1.0).
+    controladorRed:{
+      suspender:async(c)=>{ c.mikrotikPendiente='desconectar'; return {estado:'PENDIENTE'}; },
+    },
+    notificador:{
+      enviar:(c,plantilla)=>{ c.avisoPendiente=plantilla; },
+    },
+    auditoria:{
+      registrar:(accion,detalle)=>S.audit.unshift({id:Date.now()+Math.random(),usuario:S.user?S.user.u:'Sistema',fecha:now(),accion,detalle}),
+    },
+    config:S.config,
+  };
+}
+
+function confirmarCorteMensual(){
+  if(!window.ISP){toast('No se cargaron los módulos del corte','error');return;}
+  const fecha=window.ISP.hoyBogota();
+  const periodo=fecha.slice(0,7);
+  if(S.config.ultimoCorte===periodo){toast(`El corte de ${periodo} ya fue ejecutado.`,'info');return;}
+  const evaluables=S.contratos.filter(c=>c.estado==='Activo'||c.estado==='Suspendido por mora').length;
+  openModal('⚙️ Ejecutar corte mensual de cartera',`
+    <div class="alert-box warning"><div class="a-title">Esta acción cambia el estado de los contratos</div><div class="a-body">
+      Fecha de corte: <strong>${fecha}</strong> · Días de gracia: <strong>${S.config.diasGracia}</strong><br>
+      Se evaluarán <strong>${evaluables}</strong> contrato(s). Con 1 periodo vencido el contrato pasa a <strong>Suspendido por mora</strong>;
+      con 2 periodos pasa a <strong>Cancelado</strong> y se crea una orden de retiro de equipos a 15 días.
+      El corte solo se puede ejecutar una vez por mes.
+    </div></div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+     <button class="btn btn-primary" style="background:var(--orange)" onclick="ejecutarCorteUI()">Sí, ejecutar corte</button>`);
+}
+
+async function ejecutarCorteUI(){
+  const servicio=window.ISP.crearServicioCartera(crearAdaptadoresCartera());
+  const r=await servicio.ejecutarCorteMensual(window.ISP.hoyBogota());
+  closeModal();
+  openModal('📋 Resultado del corte '+r.periodo,`
+    <div class="info-grid">
+      <div class="info-item"><label>Contratos evaluados</label><div class="val">${r.evaluados}</div></div>
+      <div class="info-item"><label>Suspendidos</label><div class="val" style="color:var(--orange)">${r.suspendidos}</div></div>
+      <div class="info-item"><label>Cancelados (baja)</label><div class="val" style="color:var(--red)">${r.cancelados}</div></div>
+      <div class="info-item"><label>Errores de red</label><div class="val">${r.erroresRed}</div></div>
+      <div class="info-item"><label>Contadores corregidos</label><div class="val">${r.anomalias}</div></div>
+    </div>`,`<button class="btn btn-primary" onclick="closeModal();renderCartera()">Cerrar</button>`);
+}
+
 function renderCartera(){
   const vencidas=S.facturas.filter(f=>f.estado==='Vencida');
   const total=vencidas.reduce((a,f)=>a+facturaMonto(f),0);
@@ -1621,7 +1684,10 @@ function renderCartera(){
   <div class="panel">
     <div class="panel-head">
       <span class="panel-title">Reporte de Cartera Vencida</span>
-      <button class="btn btn-outline" onclick="toast('Exportando reporte a Excel...','info')">📊 Exportar Excel</button>
+      <div style="display:flex;gap:8px">
+        ${S.user&&S.user.rol==='admin'?`<button class="btn btn-primary" onclick="confirmarCorteMensual()">⚙️ Ejecutar corte mensual</button>`:''}
+        <button class="btn btn-outline" onclick="toast('Exportando reporte a Excel...','info')">📊 Exportar Excel</button>
+      </div>
     </div>
     <div class="tbl-wrap"><table>
       <thead><tr><th>Contrato</th><th>Cliente</th><th>Plan</th><th>Factura</th><th>Periodo</th><th>Valor Base</th><th>Recargo Mora</th><th>Total Adeudado</th><th>Días Vencido</th><th>Estado Servicio</th></tr></thead>
@@ -2098,6 +2164,22 @@ function toast(msg,type='info'){
 }
 
 // ═══════════════════════════════ BOOT ═══════════════════════════════
+// SCRUM-11: todo contrato debe tener periodosDeuda entero 0..2.
+// Los contratos creados antes de v1.1 no tienen el campo (undefined) y se inicializan.
+function migrarPeriodosDeuda(){
+  if(!window.ISP) return;
+  if(!Array.isArray(S.ordenesRetiro)) S.ordenesRetiro=[];
+  let cambios=0;
+  S.contratos.forEach(c=>{
+    const {valor,anomalia}=window.ISP.normalizarContador(c.periodosDeuda);
+    if(anomalia){ c.periodosDeuda=valor; cambios++; }
+  });
+  if(cambios>0){
+    S.audit.unshift({id:Date.now(),usuario:'Sistema',fecha:now(),accion:'Migración periodosDeuda',detalle:`${cambios} contrato(s) inicializados con periodosDeuda normalizado (SCRUM-11).`});
+    saveState();
+  }
+}
+
 function timeout(ms){
   return new Promise((_,rej)=>setTimeout(()=>rej(new Error('TIMEOUT: Firestore no respondió a tiempo (revisa proyecto/reglas/red).')),ms));
 }
@@ -2106,6 +2188,7 @@ window.onload=async ()=>{
   $('login-screen').style.display='none';
   try{
     await Promise.race([loadState(), timeout(15000)]);
+    migrarPeriodosDeuda();
     procesarFacturacionAutomatica();
     aplicarBranding();
     if(!restaurarSesion()) $('login-screen').style.display='flex';

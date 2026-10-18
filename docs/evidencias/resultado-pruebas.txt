@@ -1,0 +1,19 @@
+
+> isp-cosmos@1.1.0 test:coverage
+> node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage
+
+-------------|---------|----------|---------|---------|-------------------
+File         | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------|---------|----------|---------|---------|-------------------
+All files    |     100 |      100 |     100 |     100 |                   
+ dominio     |     100 |      100 |     100 |     100 |                   
+  reglas.js  |     100 |      100 |     100 |     100 |                   
+ servicios   |     100 |      100 |     100 |     100 |                   
+  cartera.js |     100 |      100 |     100 |     100 |                   
+-------------|---------|----------|---------|---------|-------------------
+
+Test Suites: 2 passed, 2 total
+Tests:       42 passed, 42 total
+Snapshots:   0 total
+Time:        0.469 s, estimated 1 s
+Ran all test suites.
