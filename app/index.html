@@ -1,0 +1,2124 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Master-Telecomuni | Sistema de Gestión ISP</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060B15;--surface:#0C1423;--surface2:#111C30;--surface3:#18243A;
+  --border:#1E2D45;--border2:#253450;
+  --accent:#00D9F5;--accent-dim:rgba(0,217,245,.13);
+  --green:#00C896;--green-dim:rgba(0,200,150,.12);
+  --red:#FF4757;--red-dim:rgba(255,71,87,.12);
+  --orange:#FFB300;--orange-dim:rgba(255,179,0,.12);
+  --purple:#7C3AED;--purple-dim:rgba(124,58,237,.12);
+  --text:#D8E8F4;--text2:#6A8CA8;--text3:#3A5068;
+  --r:10px;--sh:0 4px 28px rgba(0,0,0,.5);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+a{text-decoration:none;color:inherit;}
+input,select,textarea{font-family:'Outfit',sans-serif;}
+button{cursor:pointer;font-family:'Outfit',sans-serif;}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--surface);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* LOGIN */
+#login-screen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 30% 50%,rgba(0,217,245,.06) 0%,transparent 60%),
+             radial-gradient(ellipse at 70% 20%,rgba(0,200,150,.05) 0%,transparent 50%),var(--bg);
+}
+.login-card{
+  width:420px;background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:40px;box-shadow:var(--sh);
+}
+.login-logo{text-align:center;margin-bottom:32px;}
+.login-logo .sig{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--accent);letter-spacing:1px;}
+.login-logo .sub{font-size:12px;color:var(--text2);margin-top:4px;}
+
+/* APP */
+#app{display:none;min-height:100vh;}
+.app-shell{display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+#sidebar{
+  width:240px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:100;
+}
+.sb-logo{padding:20px 20px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sb-logo .brand{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--accent);}
+.sb-logo .version{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.sb-logo .role-badge{display:inline-block;margin-top:6px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;text-transform:uppercase;}
+
+.sb-nav{flex:1;padding:12px 0;overflow-y:auto;}
+.sb-section{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--text3);padding:14px 20px 6px;text-transform:uppercase;}
+.sb-item{
+  display:flex;align-items:center;gap:10px;padding:9px 20px;font-size:13px;color:var(--text2);
+  cursor:pointer;transition:.15s;border-left:3px solid transparent;
+}
+.sb-item:hover{background:var(--surface2);color:var(--text);}
+.sb-item.active{background:var(--accent-dim);color:var(--accent);border-left-color:var(--accent);}
+.sb-item .icon{font-size:16px;width:20px;text-align:center;}
+
+.sb-user{padding:16px;border-top:1px solid var(--border);flex-shrink:0;}
+.sb-user .uname{font-size:13px;font-weight:600;}
+.sb-user .urole{font-size:11px;color:var(--text2);}
+
+/* MAIN */
+#main{margin-left:240px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
+#topbar{
+  position:sticky;top:0;z-index:50;
+  background:rgba(6,11,21,.85);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);padding:12px 28px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.topbar-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+.topbar-meta{font-size:12px;color:var(--text2);}
+#content{padding:28px;flex:1;}
+
+/* CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:28px;}
+.kpi-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;
+  transition:.2s;
+}
+.kpi-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.kpi-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.kpi-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;}
+.kpi-sub{font-size:11px;color:var(--text2);margin-top:4px;}
+.kpi-card.accent{border-color:var(--accent);background:var(--accent-dim);}
+.kpi-card.green{border-color:var(--green);background:var(--green-dim);}
+.kpi-card.red{border-color:var(--red);background:var(--red-dim);}
+.kpi-card.orange{border-color:var(--orange);background:var(--orange-dim);}
+
+/* PANEL */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:20px;}
+.panel-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid var(--border);
+}
+.panel-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
+.panel-body{padding:20px;}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{
+  background:var(--surface2);color:var(--text2);font-weight:600;font-size:11px;
+  text-transform:uppercase;letter-spacing:.8px;padding:10px 14px;text-align:left;
+  border-bottom:1px solid var(--border);
+}
+td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--surface2);}
+.mono{font-family:'JetBrains Mono',monospace;font-size:12px;}
+
+/* BADGES */
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.b-green{background:var(--green-dim);color:var(--green);}
+.b-red{background:var(--red-dim);color:var(--red);}
+.b-orange{background:var(--orange-dim);color:var(--orange);}
+.b-blue{background:var(--accent-dim);color:var(--accent);}
+.b-gray{background:rgba(100,120,140,.12);color:var(--text2);}
+.b-purple{background:var(--purple-dim);color:#A78BFA;}
+
+/* BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;
+  font-size:13px;font-weight:500;border:none;transition:.15s;cursor:pointer;
+}
+.btn-sm{padding:5px 11px;font-size:12px;}
+.btn-primary{background:var(--accent);color:#000;}
+.btn-primary:hover{background:#33E4FF;filter:brightness(1.05);}
+.btn-outline{background:transparent;color:var(--text2);border:1px solid var(--border);}
+.btn-outline:hover{background:var(--surface2);color:var(--text);}
+.btn-danger{background:var(--red-dim);color:var(--red);border:1px solid var(--red);}
+.btn-danger:hover{background:var(--red);color:#fff;}
+.btn-green{background:var(--green-dim);color:var(--green);border:1px solid var(--green);}
+.btn-green:hover{background:var(--green);color:#000;}
+.btn-icon{padding:6px;border-radius:6px;}
+
+/* FORMS */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-grid.cols3{grid-template-columns:1fr 1fr 1fr;}
+.form-grid.cols1{grid-template-columns:1fr;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.span2{grid-column:span 2;}
+label{font-size:12px;color:var(--text2);font-weight:500;}
+input,select,textarea{
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:9px 12px;color:var(--text);font-size:13px;outline:none;transition:.15s;width:100%;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim);}
+input::placeholder{color:var(--text3);}
+select option{background:var(--surface);}
+textarea{resize:vertical;min-height:80px;}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:8px;}
+.input-err{border-color:var(--red)!important;}
+.err-msg{font-size:11px;color:var(--red);}
+
+/* SEARCH BAR */
+.search-bar{display:flex;gap:10px;margin-bottom:16px;align-items:center;}
+.search-input{flex:1;max-width:300px;}
+
+/* MODAL */
+#modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);
+  z-index:200;display:none;align-items:center;justify-content:center;padding:20px;
+}
+#modal-overlay.open{display:flex;}
+#modal-box{
+  background:var(--surface);border:1px solid var(--border2);border-radius:14px;
+  width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:var(--sh);
+}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid var(--border);}
+.modal-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+.modal-close{background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1;padding:4px;}
+.modal-close:hover{color:var(--text);}
+.modal-body{padding:24px;}
+.modal-foot{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+
+/* TOAST */
+#toast{
+  position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px;
+}
+.toast-item{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:12px 16px;font-size:13px;min-width:240px;max-width:360px;
+  box-shadow:var(--sh);animation:slideIn .2s ease;
+  display:flex;align-items:center;gap:10px;
+}
+.toast-item.success{border-left:3px solid var(--green);}
+.toast-item.error{border-left:3px solid var(--red);}
+.toast-item.info{border-left:3px solid var(--accent);}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:none;}}
+
+/* TABS */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px;}
+.tab{padding:10px 20px;font-size:13px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;transition:.15s;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:48px 20px;color:var(--text2);}
+.empty .icon{font-size:48px;margin-bottom:12px;}
+.empty p{font-size:14px;}
+
+/* INFO BLOCKS */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.info-item label{font-size:11px;color:var(--text2);display:block;margin-bottom:3px;}
+.info-item .val{font-size:13px;font-weight:500;}
+
+/* PORTAL DASHBOARD */
+.portal-hero{
+  background:linear-gradient(135deg,var(--surface2) 0%,var(--surface3) 100%);
+  border:1px solid var(--border);border-radius:14px;padding:28px;margin-bottom:24px;
+  display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+}
+.portal-hero .plan-name{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;}
+.portal-hero .plan-speed{color:var(--accent);font-size:14px;margin-top:4px;}
+.status-bubble{
+  padding:10px 20px;border-radius:40px;font-size:13px;font-weight:600;
+}
+.status-bubble.active{background:var(--green-dim);color:var(--green);border:1px solid var(--green);}
+.status-bubble.suspended{background:var(--red-dim);color:var(--red);border:1px solid var(--red);}
+.status-bubble.pending{background:var(--orange-dim);color:var(--orange);border:1px solid var(--orange);}
+
+/* ALERT BOX */
+.alert-box{
+  border-radius:var(--r);padding:14px 18px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start;
+}
+.alert-box.warning{background:var(--orange-dim);border:1px solid var(--orange);color:var(--orange);}
+.alert-box.danger{background:var(--red-dim);border:1px solid var(--red);color:var(--red);}
+.alert-box.success{background:var(--green-dim);border:1px solid var(--green);color:var(--green);}
+.alert-box.info{background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);}
+.alert-box .a-title{font-weight:600;font-size:13px;}
+.alert-box .a-body{font-size:12px;margin-top:3px;opacity:.85;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo" id="login-brand">
+      <div class="sig">MASTER-TELECOMUNI</div>
+    </div>
+    <div class="sub" style="text-align:center;margin-bottom:20px;color:var(--text2);font-size:12px">Sistema de Gestión ISP v1.0</div>
+    <div class="form-grid cols1" style="gap:12px">
+      <div class="form-group">
+        <label>Usuario / Cédula</label>
+        <input id="l-user" type="text" placeholder="admin">
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input id="l-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
+      </div>
+      <div id="l-err" style="color:var(--red);font-size:12px;display:none">Usuario o contraseña incorrectos</div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px" onclick="login()">Iniciar Sesión →</button>
+      <div style="text-align:center"><a href="#" onclick="solicitarRecuperacion();return false" style="font-size:12px;color:var(--accent)">¿Olvidaste tu contraseña?</a></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- APP -->
+<div id="app">
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sb-logo">
+      <div id="sb-brand"><span class="brand">MASTER-TELECOMUNI</span></div>
+      <div class="version">v1.0 — Sistema ISP</div>
+      <span id="sb-role-badge" class="role-badge"></span>
+    </div>
+    <nav class="sb-nav" id="sb-nav"></nav>
+    <div class="sb-user">
+      <div class="uname" id="sb-uname">—</div>
+      <div class="urole" id="sb-urole">—</div>
+      <button class="btn btn-outline btn-sm" style="margin-top:10px;width:100%;justify-content:center" onclick="logout()">⎋ Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main">
+    <div id="topbar">
+      <div>
+        <div class="topbar-title" id="topbar-title">Dashboard</div>
+        <div class="topbar-meta" id="topbar-meta">Master-Telecomuni</div>
+      </div>
+      <div style="font-size:12px;color:var(--text2);font-family:'JetBrains Mono',monospace" id="topbar-date"></div>
+    </div>
+    <div id="content"></div>
+  </main>
+
+</div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" onclick="closeModal()">
+  <div id="modal-box" onclick="event.stopPropagation()">
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- FIREBASE (Firestore) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="js/firebase-config.js"></script>
+<script>
+// La configuración de Firebase se carga desde js/firebase-config.js (fuera del repositorio)
+const firebaseConfig = window.firebaseConfig;
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Campos de S que se guardan/leen en Firestore (todo excepto sesión/UI)
+const PERSISTED_KEYS = ['planes','contratos','facturas','pagos','tickets','audit','config','users','nextIds','cierreHoy'];
+const STATE_DOC = db.collection('isp_data').doc('main');
+
+// Carga el estado desde Firestore. Si el documento no existe (primera vez),
+// sube los datos de ejemplo que trae la app como semilla inicial.
+async function loadState(){
+  const snap = await STATE_DOC.get();
+  if(snap.exists){
+    const data = snap.data();
+    PERSISTED_KEYS.forEach(k=>{ if(data[k]!==undefined) S[k]=data[k]; });
+  } else {
+    const seed={};
+    PERSISTED_KEYS.forEach(k=>seed[k]=S[k]);
+    await STATE_DOC.set(seed);
+  }
+}
+
+// Guarda el estado actual completo en Firestore.
+async function saveState(){
+  try{
+    const data={};
+    PERSISTED_KEYS.forEach(k=>data[k]=S[k]);
+    await STATE_DOC.set(data);
+  }catch(e){
+    console.error('Error guardando en Firestore:', e);
+    toast('⚠️ No se pudo guardar en la base de datos','error');
+  }
+}
+</script>
+
+<script>
+// ═══════════════════════════════ STATE ═══════════════════════════════
+const S = {
+  user: null,
+  activeView: '',
+  config: {
+    porcMora:5, diasGracia:3, horarioCorte:'00:00',
+    nit:'900.123.456-7', empresa:'Master-Telecomuni', emailRecuperacion:'', logoBase64:''
+  },
+  planes:[
+    {id:1,nombre:'Plan Básico 50M',bajada:50,subida:10,precio:45000,activo:true},
+    {id:2,nombre:'Plan Estándar 100M',bajada:100,subida:20,precio:65000,activo:true},
+    {id:3,nombre:'Plan Premium 200M',bajada:200,subida:50,precio:85000,activo:true},
+    {id:4,nombre:'Plan Pro 500M',bajada:500,subida:100,precio:120000,activo:true},
+    {id:5,nombre:'Plan Gamer 1Gbps',bajada:1000,subida:200,precio:180000,activo:false},
+  ],
+  contratos:[
+    {id:1,num:'CT-001',cedula:'1234567890',nombre:'Juan Carlos Pérez',dir:'Calle 45 #23-10, Medellín',tel:'3001234567',email:'juan@gmail.com',planId:2,mac:'AA:BB:CC:DD:EE:01',estado:'Activo',fecha:'2024-01-15',pass:'cliente123'},
+    {id:2,num:'CT-002',cedula:'9876543210',nombre:'María López Torres',dir:'Carrera 70 #45-20, Medellín',tel:'3109876543',email:'maria@gmail.com',planId:1,mac:'AA:BB:CC:DD:EE:02',estado:'Suspendido por mora',fecha:'2024-02-01',pass:'cliente456'},
+    {id:3,num:'CT-003',cedula:'1122334455',nombre:'Carlos Ruiz Gómez',dir:'Av. Las Palmas #10-30, Medellín',tel:'3201122334',email:'carlos@gmail.com',planId:3,mac:'',estado:'Pendiente de instalación',fecha:'2025-04-28',pass:'cliente789'},
+    {id:4,num:'CT-004',cedula:'5544332211',nombre:'Ana Sofía Martínez',dir:'Calle 80 #55-15, Medellín',tel:'3005544332',email:'ana@gmail.com',planId:2,mac:'AA:BB:CC:DD:EE:04',estado:'Activo',fecha:'2024-03-10',pass:'ana123'},
+    {id:5,num:'CT-005',cedula:'6677889900',nombre:'Luis Fernando Herrera',dir:'Carrera 50 #30-20, Medellín',tel:'3156677889',email:'luis@gmail.com',planId:4,mac:'AA:BB:CC:DD:EE:05',estado:'Activo',fecha:'2024-04-05',pass:'luis123'},
+    {id:6,num:'CT-006',cedula:'1029384756',nombre:'Paula Andrea Castro',dir:'Calle 10 #20-40, Medellín',tel:'3001029384',email:'paula@gmail.com',planId:1,mac:'AA:BB:CC:DD:EE:06',estado:'Cancelado',fecha:'2023-06-01',pass:'paula123'},
+  ],
+  facturas:[
+    {id:1,num:'FAC-0001',cId:1,periodo:'2025-05',base:65000,recargo:0,vence:'2025-05-20',estado:'Pendiente',fechaPago:null,cajero:null},
+    {id:2,num:'FAC-0002',cId:2,periodo:'2025-05',base:45000,recargo:2250,vence:'2025-04-20',estado:'Vencida',fechaPago:null,cajero:null},
+    {id:3,num:'FAC-0003',cId:2,periodo:'2025-04',base:45000,recargo:2250,vence:'2025-04-20',estado:'Vencida',fechaPago:null,cajero:null},
+    {id:4,num:'FAC-0004',cId:4,periodo:'2025-05',base:65000,recargo:0,vence:'2025-05-20',estado:'Pagada',fechaPago:'2025-05-03 09:30',cajero:'cajero'},
+    {id:5,num:'FAC-0005',cId:5,periodo:'2025-05',base:120000,recargo:0,vence:'2025-05-20',estado:'Pendiente',fechaPago:null,cajero:null},
+    {id:6,num:'FAC-0006',cId:1,periodo:'2025-04',base:65000,recargo:0,vence:'2025-04-20',estado:'Pagada',fechaPago:'2025-04-15 10:15',cajero:'cajero'},
+    {id:7,num:'FAC-0007',cId:4,periodo:'2025-04',base:65000,recargo:0,vence:'2025-04-20',estado:'Pagada',fechaPago:'2025-04-18 11:00',cajero:'cajero'},
+    {id:8,num:'FAC-0008',cId:5,periodo:'2025-04',base:120000,recargo:0,vence:'2025-04-20',estado:'Pagada',fechaPago:'2025-04-10 08:45',cajero:'cajero'},
+    {id:9,num:'FAC-0009',cId:3,periodo:'2025-05',base:85000,recargo:0,vence:'2025-05-20',estado:'Pendiente',fechaPago:null,cajero:null},
+  ],
+  pagos:[
+    {id:1,fId:4,cId:4,monto:65000,fecha:'2025-05-03 09:30',medio:'Efectivo',cajero:'cajero'},
+    {id:2,fId:6,cId:1,monto:65000,fecha:'2025-04-15 10:15',medio:'Transferencia',cajero:'cajero'},
+    {id:3,fId:7,cId:4,monto:65000,fecha:'2025-04-18 11:00',medio:'Efectivo',cajero:'cajero'},
+    {id:4,fId:8,cId:5,monto:120000,fecha:'2025-04-10 08:45',medio:'Transferencia',cajero:'cajero'},
+  ],
+  tickets:[
+    {id:1,num:'TKT-001',cId:1,tipo:'Velocidad inferior a la contratada',desc:'La velocidad medida está muy por debajo de los 100Mbps contratados.',inicio:'2025-05-06 14:00',estado:'Abierto',solucion:''},
+    {id:2,num:'TKT-002',cId:4,tipo:'Intermitencia / cortes frecuentes',desc:'El servicio se cae varias veces al día, especialmente de noche.',inicio:'2025-05-07 19:30',estado:'Resuelto',solucion:'Se reemplazó el cable en el nodo. Servicio normalizado.'},
+  ],
+  audit:[
+    {id:1,usuario:'Sistema',fecha:'2025-05-01 00:01',accion:'Generación automática de facturas',detalle:'9 facturas generadas para el periodo 2025-05'},
+    {id:2,usuario:'cajero',fecha:'2025-05-03 09:30',accion:'Registro de pago',detalle:'FAC-0004 | CT-004 | $65.000 | Efectivo'},
+    {id:3,usuario:'Sistema',fecha:'2025-04-25 00:00',accion:'Aplicación de recargo por mora',detalle:'FAC-0002 y FAC-0003: recargo del 5% aplicado'},
+    {id:4,usuario:'admin',fecha:'2025-04-20 11:00',accion:'Cambio de plan',detalle:'CT-005: Plan Estándar 100M → Plan Pro 500M'},
+  ],
+  nextIds:{contrato:7,factura:10,pago:5,ticket:3,plan:6},
+  cierreHoy:false,
+  users:[
+    {u:'admin',p:'admin123',rol:'admin',nombre:'Administrador'},
+  ]
+};
+
+// ═══════════════════════════════ HELPERS ═══════════════════════════════
+const $ = id => document.getElementById(id);
+const fmt = n => new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0}).format(n);
+const fmtNum = n => new Intl.NumberFormat('es-CO').format(n);
+const today = () => new Date().toISOString().split('T')[0];
+const now = () => new Date().toLocaleString('es-CO',{timeZone:'America/Bogota'}).replace(',','');
+// Fecha/hora en formato ISO ordenable (AAAA-MM-DD HH:MM:SS), hora Colombia.
+// Se usa para TODO lo que se vaya a filtrar por mes/día (pagos, cierres,
+// reportes). now() de arriba es solo para mostrar en pantalla/auditoría.
+const nowISO = () => new Date(Date.now()-5*60*60*1000).toISOString().slice(0,19).replace('T',' ');
+const addDias = (fechaStr,n) => { const d=new Date(fechaStr+'T00:00:00'); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0]; };
+const diasDesde = (fechaStr) => { const a=new Date(fechaStr+'T00:00:00'); const b=new Date(today()+'T00:00:00'); return Math.round((b-a)/86400000); };
+
+// ═══════════════ FACTURACIÓN AUTOMÁTICA Y SUSPENSIÓN POR MORA ═══════════════
+// Genera facturas cada 30 días contados desde la fecha de inicio de cada
+// contrato (no por mes calendario), y suspende automáticamente el servicio
+// si una factura lleva más de S.config.diasGracia días vencida sin pago.
+function procesarFacturacionAutomatica(){
+  let facturasGeneradas=0, vencidas=0;
+  S.contratos.forEach(c=>{
+    if(c.estado==='Cancelado'||c.estado==='Pendiente de instalación') return;
+    if(!c.proximoVencimiento){
+      // Primera vez: parte de la última factura conocida (o de la fecha de alta)
+      // y avanza en silencio hasta la próxima fecha futura, sin generar
+      // facturas retroactivas de ciclos ya pasados (evita "backlog" al migrar).
+      const ultimasF=S.facturas.filter(f=>f.cId===c.id).map(f=>f.vence).sort();
+      let base=ultimasF.length?ultimasF[ultimasF.length-1]:c.fecha;
+      let prox=addDias(base,30);
+      let guard0=0;
+      while(prox<today()&&guard0<600){ prox=addDias(prox,30); guard0++; }
+      c.proximoVencimiento=prox;
+    }
+    let guard=0;
+    while(c.proximoVencimiento<=today() && guard<60){
+      guard++;
+      const yaExiste=S.facturas.find(f=>f.cId===c.id&&f.vence===c.proximoVencimiento);
+      if(!yaExiste){
+        const pl=getPlan(c.planId);
+        if(pl){
+          const id=S.nextIds.factura++;
+          S.facturas.push({id,num:`FAC-${String(id).padStart(4,'0')}`,cId:c.id,periodo:c.proximoVencimiento.slice(0,7),base:pl.precio,recargo:0,vence:c.proximoVencimiento,estado:'Pendiente',fechaPago:null,cajero:null});
+          facturasGeneradas++;
+        }
+      }
+      c.proximoVencimiento=addDias(c.proximoVencimiento,30);
+    }
+  });
+  S.facturas.forEach(f=>{
+    if(f.estado==='Pendiente'&&diasDesde(f.vence)>0){
+      const c=getContrato(f.cId);
+      f.estado='Vencida';
+      f.emailPendiente='vencida';
+      vencidas++;
+      if(c) f.recargo=Math.round(f.base*(S.config.porcMora/100));
+    }
+    // La suspensión del servicio ya NO es automática: se marca la factura
+    // como "Vencida" y se avisa por correo, pero el corte lo hace el
+    // administrador manualmente desde Contratos → 🚫 Suspender.
+  });
+  if(facturasGeneradas>0||vencidas>0){
+    S.audit.unshift({id:Date.now(),usuario:'Sistema',fecha:now(),accion:'Proceso automático de facturación',detalle:`${facturasGeneradas} factura(s) generada(s) · ${vencidas} factura(s) marcada(s) como vencida(s). La suspensión sigue siendo manual.`});
+    saveState();
+  }
+}
+
+
+function getPlan(id){return S.planes.find(p=>p.id===id)||null;}
+function getContrato(id){return S.contratos.find(c=>c.id===id)||null;}
+function getContratoByNum(num){return S.contratos.find(c=>c.num===num)||null;}
+function getFactura(id){return S.facturas.find(f=>f.id===id)||null;}
+function getFacturaByNum(num){return S.facturas.find(f=>f.num===num)||null;}
+
+function facturaMonto(f){return f.base+f.recargo;}
+function estadoBadge(e){
+  const m={
+    'Activo':'b-green','Suspendido por mora':'b-red','Pendiente de instalación':'b-orange',
+    'Cancelado':'b-gray','Pagada':'b-green','Pendiente':'b-orange','Vencida':'b-red',
+    'Abierto':'b-orange','Resuelto':'b-green'
+  };
+  return `<span class="badge ${m[e]||'b-gray'}">${e}</span>`;
+}
+
+function addAudit(accion,detalle){
+  S.audit.unshift({id:Date.now(),usuario:S.user.u,fecha:now(),accion,detalle});
+  saveState();
+}
+
+// ═══════════════════════════════ AUTH ═══════════════════════════════
+// La sesión se guarda en este dispositivo (localStorage) y se restaura sola
+// al abrir la página. Solo se borra al pulsar "Cerrar sesión".
+const SESSION_KEY='isp_sesion';
+
+function buscarUsuario(u,p){
+  // Personal (admin / cajero / contador)
+  let usr=S.users.find(x=>x.u===u&&x.p===p);
+  // Cliente (cédula + contraseña del portal)
+  if(!usr){
+    const c=S.contratos.find(x=>x.cedula===u&&x.pass===p);
+    if(c) usr={u:c.cedula,p:c.pass,rol:'cliente',nombre:c.nombre,cId:c.id};
+  }
+  return usr||null;
+}
+function guardarSesion(u,p){
+  try{ localStorage.setItem(SESSION_KEY, JSON.stringify({u,p})); }
+  catch(e){ console.warn('No se pudo guardar la sesión:',e); }
+}
+function borrarSesion(){
+  try{ localStorage.removeItem(SESSION_KEY); localStorage.removeItem('isp_recordar_login'); }catch(e){}
+}
+function entrarAlSistema(usr){
+  S.user=usr;
+  $('login-screen').style.display='none';
+  $('app').style.display='block';
+  initApp();
+}
+// Devuelve true si había una sesión guardada válida y entró automáticamente.
+function restaurarSesion(){
+  try{
+    const g=localStorage.getItem(SESSION_KEY);
+    if(!g) return false;
+    const {u,p}=JSON.parse(g);
+    const usr=buscarUsuario(u,p);
+    if(!usr){ borrarSesion(); return false; } // usuario borrado o contraseña cambiada
+    entrarAlSistema(usr);
+    return true;
+  }catch(e){
+    console.warn('No se pudo restaurar la sesión:',e);
+    return false;
+  }
+}
+function login(){
+  const u=$('l-user').value.trim();
+  const p=$('l-pass').value;
+  const usr=buscarUsuario(u,p);
+  if(!usr){$('l-err').style.display='block';return;}
+  $('l-err').style.display='none';
+  guardarSesion(u,p);
+  entrarAlSistema(usr);
+}
+function logout(){
+  borrarSesion();
+  S.user=null;
+  $('app').style.display='none';
+  $('login-screen').style.display='flex';
+  $('l-user').value=''; $('l-pass').value='';
+}
+
+// ═══════════════════════════════ RECUPERACIÓN DE CONTRASEÑA ═══════════════════════════════
+// El navegador no puede enviar correos por sí solo: esta función solo deja
+// una "solicitud" en Firestore. Una Cloud Function (ver funciones/) la
+// detecta, genera una contraseña temporal y la envía al correo de
+// recuperación configurado en Configuración → Seguridad.
+function solicitarRecuperacion(){
+  openModal('¿Olvidaste tu contraseña?',`
+    <div class="alert-box info"><div class="a-body">Se enviará una contraseña temporal al correo de recuperación configurado por el administrador.</div></div>
+    <div class="form-grid cols1" style="gap:12px">
+      <div class="form-group"><label>Usuario</label><input id="rec-user" placeholder="admin"></div>
+      <div id="rec-err" class="err-msg" style="display:none"></div>
+      <div id="rec-ok" style="color:var(--green);font-size:13px;display:none"></div>
+    </div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Cerrar</button>
+     <button class="btn btn-primary" onclick="enviarSolicitudRecuperacion()">Enviar</button>`
+  );
+}
+
+async function enviarSolicitudRecuperacion(){
+  const usuario=$('rec-user').value.trim();
+  const err=$('rec-err'); const ok=$('rec-ok');
+  err.style.display='none'; ok.style.display='none';
+  if(!usuario){err.textContent='Escribe tu usuario.';err.style.display='block';return;}
+  try{
+    await STATE_DOC.set({ solicitudRecuperacion: { usuario, token: Date.now() } }, { merge: true });
+  }catch(e){
+    console.error(e);
+  }
+  // Mensaje siempre genérico (exista o no el usuario, o exista o no correo
+  // configurado) para no revelar información a quien intente adivinar usuarios.
+  ok.textContent='Si el usuario existe y hay un correo de recuperación configurado, llegará una contraseña temporal en unos minutos.';
+  ok.style.display='block';
+}
+
+// ═══════════════════════════════ INIT ═══════════════════════════════
+function initApp(){
+  $('sb-uname').textContent=S.user.nombre;
+  const roleNames={admin:'Administrador',cajero:'Cajero',contador:'Contador',cliente:'Cliente'};
+  const roleColors={admin:'#A78BFA',cajero:'var(--green)',contador:'var(--orange)',cliente:'var(--accent)'};
+  $('sb-urole').textContent=roleNames[S.user.rol];
+  const badge=$('sb-role-badge');
+  badge.textContent=roleNames[S.user.rol].toUpperCase();
+  badge.style.background=roleColors[S.user.rol]+'22';
+  badge.style.color=roleColors[S.user.rol];
+  badge.style.border=`1px solid ${roleColors[S.user.rol]}44`;
+
+  buildSidebar();
+  setInterval(()=>{
+    const d=new Date();
+    $('topbar-date').textContent=d.toLocaleDateString('es-CO',{weekday:'short',day:'2-digit',month:'short',year:'numeric'})+'  '+d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+  },1000);
+
+  // Default view
+  const defaults={admin:'dashboard',cajero:'recaudo',contador:'ingresos',cliente:'portal'};
+  navTo(defaults[S.user.rol]);
+}
+
+const NAV_DEFS = {
+  admin:[
+    {section:'Principal'},
+    {id:'dashboard',icon:'◈',label:'Dashboard'},
+    {section:'Gestión'},
+    {id:'contratos',icon:'📋',label:'Contratos'},
+    {id:'planes',icon:'📡',label:'Planes Internet'},
+    {section:'Operaciones'},
+    {id:'facturacion',icon:'🧾',label:'Facturación'},
+    {id:'recaudo',icon:'💳',label:'Recaudo'},
+    {id:'cierre',icon:'🔒',label:'Cierre de Caja'},
+    {section:'Reportes'},
+    {id:'cartera',icon:'⚠️',label:'Cartera Vencida'},
+    {id:'ingresos',icon:'📊',label:'Ingresos'},
+    {section:'Sistema'},
+    {id:'tickets',icon:'🎫',label:'Tickets Soporte'},
+    {id:'auditoria',icon:'📝',label:'Auditoría'},
+    {id:'configuracion',icon:'⚙️',label:'Configuración'},
+  ],
+  cajero:[
+    {section:'Operaciones'},
+    {id:'recaudo',icon:'💳',label:'Registrar Pago'},
+    {id:'cierre',icon:'🔒',label:'Cierre de Caja'},
+  ],
+  contador:[
+    {section:'Reportes'},
+    {id:'ingresos',icon:'📊',label:'Ingresos Consolidado'},
+  ],
+  cliente:[
+    {section:'Mi Servicio'},
+    {id:'portal',icon:'◈',label:'Estado de Cuenta'},
+    {id:'mis-facturas',icon:'🧾',label:'Mis Facturas'},
+    {id:'mis-pagos',icon:'💳',label:'Mis Pagos'},
+    {id:'nuevo-ticket',icon:'🎫',label:'Reportar Incidente'},
+  ]
+};
+
+function buildSidebar(){
+  const nav=$('sb-nav');
+  const items=NAV_DEFS[S.user.rol]||[];
+  nav.innerHTML=items.map(x=>{
+    if(x.section) return `<div class="sb-section">${x.section}</div>`;
+    return `<div class="sb-item" id="nav-${x.id}" onclick="navTo('${x.id}')">`+
+           `<span class="icon">${x.icon}</span><span>${x.label}</span></div>`;
+  }).join('');
+}
+
+function navTo(id){
+  S.activeView=id;
+  document.querySelectorAll('.sb-item').forEach(el=>el.classList.remove('active'));
+  const el=$(`nav-${id}`);
+  if(el) el.classList.add('active');
+  const views={
+    dashboard:renderDashboard,contratos:renderContratos,planes:renderPlanes,
+    facturacion:renderFacturacion,recaudo:renderRecaudo,cierre:renderCierre,
+    cartera:renderCartera,ingresos:renderIngresos,tickets:renderTickets,
+    auditoria:renderAuditoria,configuracion:renderConfig,
+    portal:renderPortal,'mis-facturas':renderMisFacturas,
+    'mis-pagos':renderMisPagos,'nuevo-ticket':renderNuevoTicket
+  };
+  const titles={
+    dashboard:'Dashboard',contratos:'Gestión de Contratos',planes:'Planes de Internet',
+    facturacion:'Facturación',recaudo:'Recaudo — Registrar Pago',cierre:'Cierre de Caja',
+    cartera:'Cartera Vencida',ingresos:'Ingresos Consolidado',tickets:'Tickets de Soporte',
+    auditoria:'Log de Auditoría',configuracion:'Configuración del Sistema',
+    portal:'Estado de Cuenta','mis-facturas':'Mis Facturas',
+    'mis-pagos':'Mi Historial de Pagos','nuevo-ticket':'Reportar Incidente'
+  };
+  $('topbar-title').textContent=titles[id]||id;
+  $('topbar-meta').textContent='Master-Telecomuni — '+new Date().toLocaleDateString('es-CO',{month:'long',year:'numeric'});
+  if(views[id]) views[id]();
+  else $('content').innerHTML=`<div class="empty"><div class="icon">🚧</div><p>Módulo en construcción</p></div>`;
+}
+
+// ═══════════════════════════════ DASHBOARD ═══════════════════════════════
+function mesesDisponiblesDashboard(){
+  // Todos los meses donde hay pagos o facturas registradas, + el mes actual
+  // (aunque todavía no tenga movimientos), del más reciente al más viejo.
+  const mesActual=today().slice(0,7);
+  const set=new Set([
+    ...S.pagos.map(p=>p.fecha.slice(0,7)),
+    ...S.facturas.map(f=>f.periodo),
+  ]);
+  set.add(mesActual);
+  return [...set].sort().reverse();
+}
+
+function renderDashboard(mesSel){
+  const mesActual=today().slice(0,7);
+  const mes=mesSel||mesActual;
+  const activos=S.contratos.filter(c=>c.estado==='Activo').length;
+  const suspendidos=S.contratos.filter(c=>c.estado==='Suspendido por mora').length;
+  const pendientes=S.contratos.filter(c=>c.estado==='Pendiente de instalación').length;
+  const vencidas=S.facturas.filter(f=>f.estado==='Vencida');
+  const cartera=vencidas.reduce((a,f)=>a+facturaMonto(f),0);
+  const pagasMes=mes==='TODOS'?S.pagos:S.pagos.filter(p=>p.fecha.startsWith(mes));
+  const ingresosMes=pagasMes.reduce((a,p)=>a+p.monto,0);
+  const facturasPagadasMes=mes==='TODOS'
+    ?S.facturas.filter(f=>f.estado==='Pagada')
+    :S.facturas.filter(f=>f.estado==='Pagada'&&(f.fechaPago||'').startsWith(mes));
+  const totalFacturasPagadasMes=facturasPagadasMes.reduce((a,f)=>a+facturaMonto(f),0);
+  const ticketsAbiertos=S.tickets.filter(t=>t.estado==='Abierto').length;
+  const nombreMes=mes==='TODOS'?'Total Acumulado':new Date(mes+'-02').toLocaleDateString('es-CO',{month:'long',year:'numeric'});
+  const meses=mesesDisponiblesDashboard();
+
+  // Facturas pendientes/vencidas: primero las del mes actual, luego el resto (más recientes primero)
+  const facturasOrdenadas=[...S.facturas].sort((a,b)=>{
+    const aActual=a.periodo===mesActual?0:1, bActual=b.periodo===mesActual?0:1;
+    if(aActual!==bActual) return aActual-bActual;
+    return b.vence.localeCompare(a.vence);
+  });
+
+  $('content').innerHTML=`
+  <div class="kpi-grid">
+    <div class="kpi-card accent"><div class="kpi-label">Clientes Activos</div><div class="kpi-val" style="color:var(--accent)">${activos}</div><div class="kpi-sub">de ${S.contratos.length} contratos totales</div></div>
+    <div class="kpi-card red"><div class="kpi-label">Suspendidos por Mora</div><div class="kpi-val" style="color:var(--red)">${suspendidos}</div><div class="kpi-sub">cartera: ${fmt(cartera)}</div></div>
+    <div class="kpi-card green">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="kpi-label">Ingresos — ${nombreMes}</div>
+        <select onchange="renderDashboard(this.value)" style="font-size:11px;padding:2px 6px;max-width:130px">
+          <option value="TODOS" ${mes==='TODOS'?'selected':''}>Acumulado (todo)</option>
+          ${meses.map(m=>`<option value="${m}" ${m===mes?'selected':''}>${new Date(m+'-02').toLocaleDateString('es-CO',{month:'short',year:'numeric'})}</option>`).join('')}
+        </select>
+      </div>
+      <div class="kpi-val" style="color:var(--green)">${fmt(ingresosMes)}</div><div class="kpi-sub">${pagasMes.length} pagos registrados</div></div>
+    <div class="kpi-card orange"><div class="kpi-label">Pendientes Instalación</div><div class="kpi-val" style="color:var(--orange)">${pendientes}</div><div class="kpi-sub">${ticketsAbiertos} tickets abiertos</div></div>
+    <div class="kpi-card accent"><div class="kpi-label">Facturas Pagadas — ${nombreMes}</div><div class="kpi-val" style="color:var(--accent)">${facturasPagadasMes.length}</div><div class="kpi-sub">${fmt(totalFacturasPagadasMes)} recaudado</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Facturas pendientes / vencidas (mes actual primero)</span><button class="btn btn-outline btn-sm" onclick="navTo('facturacion')">Ver todas</button></div>
+      <div class="tbl-wrap">
+        <table><thead><tr><th>Factura</th><th>Cliente</th><th>Periodo</th><th>Monto</th><th>Estado</th></tr></thead>
+        <tbody>${facturasOrdenadas.filter(f=>f.estado==='Pendiente'||f.estado==='Vencida').slice(0,6).map(f=>{
+          const c=getContrato(f.cId);
+          return `<tr><td class="mono">${f.num}</td><td>${c?c.nombre.split(' ')[0]+' '+(c.nombre.split(' ')[1]||''):'—'}</td><td>${f.periodo}</td><td>${fmt(facturaMonto(f))}</td><td>${estadoBadge(f.estado)}</td></tr>`;
+        }).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--text2);padding:20px">Sin facturas pendientes o vencidas 🎉</td></tr>'}</tbody></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Últimos pagos</span><button class="btn btn-outline btn-sm" onclick="navTo('recaudo')">Registrar pago</button></div>
+      <div class="tbl-wrap">
+        <table><thead><tr><th>Fecha</th><th>Cliente</th><th>Monto</th><th>Medio</th></tr></thead>
+        <tbody>${S.pagos.slice(-6).reverse().map(p=>{
+          const c=getContrato(p.cId);
+          return `<tr><td class="mono" style="font-size:11px">${p.fecha}</td><td>${c?c.nombre.split(' ')[0]:'—'}</td><td style="color:var(--green)">${fmt(p.monto)}</td><td><span class="badge b-blue">${p.medio}</span></td></tr>`;
+        }).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--text2);padding:20px">Sin pagos registrados</td></tr>'}</tbody></table>
+      </div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:20px">
+    <div class="panel-head"><span class="panel-title">Distribución de clientes por estado</span></div>
+    <div class="panel-body">
+      <div style="display:flex;gap:24px;flex-wrap:wrap">
+        ${[['Activo',activos,'var(--green)'],['Suspendido por mora',suspendidos,'var(--red)'],['Pendiente de instalación',pendientes,'var(--orange)'],['Cancelado',S.contratos.filter(c=>c.estado==='Cancelado').length,'var(--text3)']].map(([lbl,cnt,col])=>`
+        <div style="flex:1;min-width:120px;background:var(--surface2);border-radius:10px;padding:16px;border:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px">${lbl}</div>
+          <div style="font-size:24px;font-family:'Syne',sans-serif;font-weight:700;color:${col}">${cnt}</div>
+          <div style="height:4px;background:var(--border);border-radius:2px;margin-top:8px"><div style="height:100%;width:${cnt&&S.contratos.length?Math.round(cnt/S.contratos.length*100):0}%;background:${col};border-radius:2px"></div></div>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════ CONTRATOS ═══════════════════════════════
+function renderContratos(filter=''){
+  const contratos=filter?S.contratos.filter(c=>c.nombre.toLowerCase().includes(filter.toLowerCase())||c.cedula.includes(filter)||c.num.toLowerCase().includes(filter.toLowerCase())||(c.apto||'').toLowerCase().includes(filter.toLowerCase())):S.contratos;
+  $('content').innerHTML=`
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">Contratos (${contratos.length})</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" onclick="abrirCargaMasiva()">📤 Carga Masiva</button>
+        <button class="btn btn-outline" onclick="exportarClientesExcel()">⬇️ Descargar Clientes</button>
+        <button class="btn btn-primary" onclick="abrirFormContrato()">＋ Nuevo Contrato</button>
+      </div>
+    </div>
+    <div style="padding:16px 20px 0">
+      <div class="search-bar">
+        <input class="search-input" id="s-contratos" placeholder="Buscar por nombre, cédula, apartamento o N° contrato..." value="${filter}" oninput="renderContratos(this.value)">
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Contrato</th><th>Cliente</th><th>Cédula</th><th>Plan</th><th>Instalación</th><th>Próxima Factura</th><th>MAC</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody>${contratos.map(c=>{
+        const pl=getPlan(c.planId);
+        return `<tr>
+          <td class="mono">${c.num}</td>
+          <td><div style="font-weight:500">${c.nombre}</div><div style="font-size:11px;color:var(--text2)">${c.apto?'Apto '+c.apto:'Sin apartamento'}</div></td>
+          <td class="mono">${c.cedula}</td>
+          <td>${pl?`<div>${pl.nombre}</div><div style="font-size:11px;color:var(--text2)">${fmt(pl.precio)}/mes</div>`:'-'}</td>
+          <td class="mono" style="font-size:11px">${c.fecha||'—'}</td>
+          <td class="mono" style="font-size:11px;color:var(--accent)">${c.proximoVencimiento||'—'}</td>
+          <td class="mono" style="font-size:11px">${c.mac||'<span style="color:var(--orange)">Sin registrar</span>'}</td>
+          <td>${estadoBadge(c.estado)}${c.mikrotikPendiente?`<div style="font-size:10px;color:var(--orange);margin-top:3px">📡 Pendiente: ${c.mikrotikPendiente}</div>`:''}</td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-outline btn-sm btn-icon" title="Editar" onclick="abrirFormContrato(${c.id})">✏️</button>
+              <button class="btn btn-outline btn-sm btn-icon" title="Editar fecha de instalación" onclick="abrirEditarFecha(${c.id})">📅</button>
+              <button class="btn btn-outline btn-sm btn-icon" title="Registrar MAC" onclick="abrirMAC(${c.id})">📡</button>
+              <button class="btn btn-outline btn-sm btn-icon" title="Ver facturas" onclick="verFacturasCliente(${c.id})">🧾</button>
+              ${c.estado==='Suspendido por mora'
+                ?`<button class="btn btn-outline btn-sm btn-icon" title="Reactivar servicio" style="color:var(--green);border-color:var(--green)" onclick="reactivarManual(${c.id})">▶️</button>`
+                :c.estado==='Activo'?`<button class="btn btn-outline btn-sm btn-icon" title="Suspender por mora" style="color:var(--orange);border-color:var(--orange)" onclick="confirmarSuspenderManual(${c.id})">🚫</button>`:''}
+              <button class="btn btn-outline btn-sm btn-icon" title="Borrar definitivamente" style="color:var(--red);border-color:var(--red)" onclick="confirmarBorrarContrato(${c.id})">🗑️</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('')}</tbody></table>
+    </div>
+  </div>`;
+}
+
+function abrirFormContrato(id=null){
+  const c=id?getContrato(id):{};
+  const planesOpts=S.planes.filter(p=>p.activo).map(p=>`<option value="${p.id}" ${c.planId===p.id?'selected':''}>${p.nombre} — ${fmt(p.precio)}/mes</option>`).join('');
+  openModal(`${id?'Editar':'Nuevo'} Contrato`,`
+    <div class="form-grid">
+      <div class="form-group"><label>Nombre Completo *</label><input id="fc-nombre" value="${c.nombre||''}" placeholder="Ej: Juan Carlos Pérez"></div>
+      <div class="form-group"><label>Número de Cédula *</label><input id="fc-cedula" value="${c.cedula||''}" placeholder="Sin puntos ni espacios"></div>
+      <div class="form-group span2"><label>Dirección de Instalación *</label><input id="fc-dir" value="${c.dir||''}" placeholder="Calle / Carrera / Avenida"></div>
+      <div class="form-group"><label>Apartamento</label><input id="fc-apto" value="${c.apto||''}" placeholder="Ej: 301 / Torre 2 - 405"></div>
+      <div class="form-group"><label>Teléfono *</label><input id="fc-tel" value="${c.tel||''}" placeholder="3XX XXXXXXX"></div>
+      <div class="form-group"><label>Correo Electrónico</label><input id="fc-email" type="email" value="${c.email||''}" placeholder="cliente@correo.com"></div>
+      <div class="form-group"><label>Plan de Internet *</label><select id="fc-plan"><option value="">Seleccione...</option>${planesOpts}</select></div>
+      <div class="form-group"><label>Contraseña Portal Cliente *</label><input id="fc-pass" value="${c.pass||''}" placeholder="Mínimo 6 caracteres"></div>
+      <div class="form-group span2" style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
+        <label style="color:var(--accent)">📡 Conexión al router Mikrotik de este cliente</label>
+      </div>
+      <div class="form-group"><label>IP del Mikrotik</label><input id="fc-mk-ip" value="${c.mikrotikIp||''}" placeholder="Ej: 192.168.88.1"></div>
+      <div class="form-group"><label>Usuario API Mikrotik</label><input id="fc-mk-user" value="${c.mikrotikUser||''}" placeholder="Ej: admin"></div>
+      <div class="form-group"><label>Contraseña API Mikrotik</label><input id="fc-mk-pass" type="password" value="${c.mikrotikPass||''}" placeholder="Contraseña del router"></div>
+      <div class="form-group"><label>Interfaz / Cola / PPPoE a controlar</label><input id="fc-mk-if" value="${c.mikrotikInterface||''}" placeholder="Ej: pppoe-juanperez"></div>
+      <div id="fc-err" class="span2 err-msg" style="display:none"></div>
+    </div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+     <button class="btn btn-primary" onclick="guardarContrato(${id||'null'})">Guardar Contrato</button>`
+  );
+}
+
+function guardarContrato(id){
+  const n=$('fc-nombre').value.trim();
+  const ced=$('fc-cedula').value.trim();
+  const dir=$('fc-dir').value.trim();
+  const tel=$('fc-tel').value.trim();
+  const apto=$('fc-apto').value.trim();
+  const email=$('fc-email').value.trim();
+  const planId=parseInt($('fc-plan').value);
+  const pass=$('fc-pass').value.trim();
+  const mikrotikIp=$('fc-mk-ip').value.trim();
+  const mikrotikUser=$('fc-mk-user').value.trim();
+  const mikrotikPass=$('fc-mk-pass').value.trim();
+  const mikrotikInterface=$('fc-mk-if').value.trim();
+  const err=$('fc-err');
+  if(!n||!ced||!dir||!tel||!planId||!pass){err.textContent='Complete los campos obligatorios (*).';err.style.display='block';return;}
+  // Validar cedula única
+  const dup=S.contratos.find(c=>c.cedula===ced&&c.estado!=='Cancelado'&&c.id!==id);
+  if(dup){err.textContent='Ya existe un contrato activo con esta cédula.';err.style.display='block';return;}
+  if(id){
+    const c=getContrato(id);
+    const oldPlan=getPlan(c.planId);
+    Object.assign(c,{nombre:n,cedula:ced,dir,apto,tel,email,planId,pass,mikrotikIp,mikrotikUser,mikrotikPass,mikrotikInterface});
+    if(c.planId!==planId) addAudit('Cambio de plan',`${c.num}: ${oldPlan?.nombre||'?'} → ${getPlan(planId)?.nombre||'?'}`);
+    else addAudit('Contrato editado',`${c.num} — ${n}`);
+    toast('Contrato actualizado correctamente','success');
+  } else {
+    const newId=S.nextIds.contrato++;
+    const num=`CT-${String(newId).padStart(3,'0')}`;
+    S.contratos.push({id:newId,num,cedula:ced,nombre:n,dir,apto,tel,email,planId,mac:'',estado:'Pendiente de instalación',fecha:today(),pass,mikrotikIp,mikrotikUser,mikrotikPass,mikrotikInterface,proximoVencimiento:addDias(today(),30)});
+    addAudit('Nuevo contrato',`${num} — ${n}`);
+    toast(`Contrato ${num} creado. Registre la MAC para activar.`,'success');
+  }
+  closeModal();renderContratos();
+}
+
+// Descarga TODOS los clientes con toda su información en un solo Excel.
+function exportarClientesExcel(){
+  if(S.contratos.length===0){toast('No hay clientes para exportar','info');return;}
+  const headers=['num','nombre','cedula','direccion','apartamento','telefono','email','plan','velocidad','precio_plan','estado','mac','fecha_instalacion','proxima_factura','contraseña_portal','mikrotik_ip','mikrotik_usuario','mikrotik_password','mikrotik_interfaz','facturas_totales','facturas_pendientes','facturas_vencidas','ultimo_pago'];
+  const filas=S.contratos.map(c=>{
+    const pl=getPlan(c.planId);
+    const facsCliente=S.facturas.filter(f=>f.cId===c.id);
+    const pagosCliente=S.pagos.filter(p=>p.cId===c.id).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+    return [
+      c.num,c.nombre,c.cedula,c.dir,c.apto||'',c.tel,c.email||'',
+      pl?pl.nombre:'',pl?`${pl.bajada}/${pl.subida} Mbps`:'',pl?pl.precio:'',
+      c.estado,c.mac||'',c.fecha||'',c.proximoVencimiento||'',c.pass||'',
+      c.mikrotikIp||'',c.mikrotikUser||'',c.mikrotikPass||'',c.mikrotikInterface||'',
+      facsCliente.length,
+      facsCliente.filter(f=>f.estado==='Pendiente').length,
+      facsCliente.filter(f=>f.estado==='Vencida').length,
+      pagosCliente[0]?pagosCliente[0].fecha:''
+    ];
+  });
+  const ws=XLSX.utils.aoa_to_sheet([headers,...filas]);
+  ws['!cols']=headers.map(()=>({wch:20}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Clientes');
+  const fechaArchivo=today();
+  XLSX.writeFile(wb,`clientes_${S.config.empresa.replace(/\s+/g,'_')}_${fechaArchivo}.xlsx`);
+  addAudit('Exportación de clientes',`Se descargó el listado completo de ${S.contratos.length} clientes en Excel.`);
+}
+
+// ═══════════════════════════════ CARGA MASIVA DE CONTRATOS ═══════════════════════════════
+const PLANTILLA_HEADERS=['nombre','cedula','direccion','apartamento','telefono','email','plan','contraseña_portal','fecha_inicio','mikrotik_ip','mikrotik_usuario','mikrotik_password','mikrotik_interfaz'];
+
+function descargarPlantillaContratos(){
+  const planesDisponibles=S.planes.filter(p=>p.activo).map(p=>p.nombre).join(' | ');
+  const ejemplo=['Juan Pérez Gómez','1234567890','Calle 45 #23-10, Medellín','301','3001234567','juan@correo.com',S.planes[0]?.nombre||'Plan Básico 50M','clave123',today(),'192.168.88.1','admin','claveMikrotik','pppoe-juanperez'];
+  const nota=[`Planes válidos hoy: ${planesDisponibles}`];
+  const ws=XLSX.utils.aoa_to_sheet([PLANTILLA_HEADERS,ejemplo,[],['⚠️ El nombre del plan debe coincidir EXACTO con uno de estos:'],[planesDisponibles],['⚠️ fecha_inicio en formato AAAA-MM-DD (ej: '+today()+'). A partir de esa fecha se cuentan los ciclos de facturación de 30 días.'],['Los campos mikrotik_* son opcionales, déjalos vacíos si aún no los tienes.']]);
+  ws['!cols']=PLANTILLA_HEADERS.map(()=>({wch:22}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Contratos');
+  XLSX.writeFile(wb,'plantilla_carga_contratos.xlsx');
+}
+
+function abrirCargaMasiva(){
+  const planesDisponibles=S.planes.filter(p=>p.activo).map(p=>p.nombre).join(', ');
+  openModal('📤 Carga Masiva de Contratos',`
+    <div class="alert-box info">
+      <div class="a-title">Antes de subir tu archivo</div>
+      <div class="a-body">
+        1. Descarga la plantilla.<br>
+        2. Complétala en Excel — <strong>no cambies los nombres de las columnas</strong>.<br>
+        3. La columna <strong>fecha_inicio</strong> (AAAA-MM-DD) es clave: desde ahí se cuentan los ciclos de facturación de 30 días de cada cliente.<br>
+        4. La columna <strong>plan</strong> debe coincidir exacto con uno de: ${planesDisponibles}.<br>
+        5. Los contratos se crean en estado "Pendiente de instalación" — registra la MAC de cada uno luego para activarlos.
+      </div>
+    </div>
+    <button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:14px" onclick="descargarPlantillaContratos()">⬇️ Descargar plantilla (.xlsx)</button>
+    <div class="form-group">
+      <label>Subir archivo completado (.xlsx o .csv)</label>
+      <input type="file" id="cm-file" accept=".xlsx,.xls,.csv">
+    </div>
+    <div id="cm-resultado" style="margin-top:12px;font-size:13px"></div>
+  `,`<button class="btn btn-outline" onclick="closeModal()">Cerrar</button>
+     <button class="btn btn-primary" onclick="procesarArchivoCargaMasiva()">Procesar Archivo</button>`
+  );
+}
+
+function procesarArchivoCargaMasiva(){
+  const input=$('cm-file');
+  const resultado=$('cm-resultado');
+  const file=input.files[0];
+  if(!file){resultado.innerHTML='<span style="color:var(--red)">Selecciona un archivo primero.</span>';return;}
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+      const sheet=wb.Sheets[wb.SheetNames[0]];
+      const filas=XLSX.utils.sheet_to_json(sheet,{defval:''});
+      let creados=0; const errores=[];
+      filas.forEach((fila,idx)=>{
+        const numFila=idx+2; // +2: fila 1 son encabezados
+        const nombre=String(fila.nombre||'').trim();
+        const cedula=String(fila.cedula||'').trim();
+        const direccion=String(fila.direccion||'').trim();
+        const apto=String(fila.apartamento||'').trim();
+        const telefono=String(fila.telefono||'').trim();
+        const email=String(fila.email||'').trim();
+        const planNombre=String(fila.plan||'').trim();
+        const pass=String(fila['contraseña_portal']||fila.contrasena_portal||fila.pass||'').trim();
+        let fechaInicio=fila.fecha_inicio;
+        if(fechaInicio instanceof Date) fechaInicio=fechaInicio.toISOString().split('T')[0];
+        else fechaInicio=String(fechaInicio||'').trim().slice(0,10);
+        const mikrotikIp=String(fila.mikrotik_ip||'').trim();
+        const mikrotikUser=String(fila.mikrotik_usuario||'').trim();
+        const mikrotikPass=String(fila.mikrotik_password||'').trim();
+        const mikrotikInterface=String(fila.mikrotik_interfaz||'').trim();
+
+        if(!nombre&&!cedula) return; // fila vacía, se ignora sin marcar error
+        if(!nombre||!cedula||!direccion||!telefono||!planNombre||!pass){errores.push(`Fila ${numFila}: faltan campos obligatorios.`);return;}
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(fechaInicio)){errores.push(`Fila ${numFila}: fecha_inicio inválida ("${fechaInicio}"). Usa AAAA-MM-DD.`);return;}
+        const plan=S.planes.find(p=>p.nombre.toLowerCase()===planNombre.toLowerCase()&&p.activo);
+        if(!plan){errores.push(`Fila ${numFila}: el plan "${planNombre}" no existe o está inactivo.`);return;}
+        const dup=S.contratos.find(c=>c.cedula===cedula&&c.estado!=='Cancelado');
+        if(dup){errores.push(`Fila ${numFila}: ya existe un contrato activo con la cédula ${cedula}.`);return;}
+
+        const newId=S.nextIds.contrato++;
+        const num=`CT-${String(newId).padStart(3,'0')}`;
+        S.contratos.push({id:newId,num,cedula,nombre,dir:direccion,apto,tel:telefono,email,planId:plan.id,mac:'',estado:'Pendiente de instalación',fecha:fechaInicio,pass,mikrotikIp,mikrotikUser,mikrotikPass,mikrotikInterface,proximoVencimiento:addDias(fechaInicio,30)});
+        creados++;
+      });
+      if(creados>0) addAudit('Carga masiva de contratos',`${creados} contrato(s) creado(s) desde archivo "${file.name}".`);
+      resultado.innerHTML=`
+        <div style="color:var(--green);font-weight:600">✅ ${creados} contrato(s) creado(s) correctamente.</div>
+        ${errores.length?`<div style="color:var(--red);margin-top:8px"><strong>${errores.length} fila(s) con problemas:</strong><ul style="margin:6px 0 0 18px;padding:0">${errores.map(e=>`<li>${e}</li>`).join('')}</ul></div>`:''}
+      `;
+      if(creados>0){ toast(`${creados} contratos creados`,'success'); renderContratos(); }
+    }catch(err){
+      console.error(err);
+      resultado.innerHTML=`<span style="color:var(--red)">Error leyendo el archivo: ${err.message}. Verifica que sea el formato de la plantilla.</span>`;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Edita solo la fecha de instalación de un contrato, y recalcula desde ahí
+// el ciclo de facturación de 30 días (sin tocar facturas ya generadas).
+// Suspensión y reactivación manuales del servicio (el corte real en Mikrotik
+// ya no es automático por mora: el correo avisa, pero el admin decide cuándo).
+function confirmarSuspenderManual(id){
+  const c=getContrato(id);
+  if(!c) return;
+  const facVencida=S.facturas.find(f=>f.cId===id&&f.estado==='Vencida');
+  openModal(`🚫 Suspender servicio — ${c.num}`,`
+    <div class="alert-box warning">
+      <div class="a-title">¿Suspender a ${c.nombre}?</div>
+      <div class="a-body">
+        ${facVencida?`Tiene la factura <strong>${facVencida.num}</strong> vencida desde el ${facVencida.vence}.`:'No tiene facturas vencidas registradas.'}<br>
+        Esto marca el contrato como "Suspendido por mora" y envía la instrucción de corte al Mikrotik.
+      </div>
+    </div>
+  `,`<button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+     <button class="btn btn-primary" style="background:var(--orange)" onclick="suspenderManual(${id})">Sí, suspender</button>`
+  );
+}
+
+function suspenderManual(id){
+  const c=getContrato(id);
+  c.estado='Suspendido por mora';
+  c.mikrotikPendiente='desconectar';
+  addAudit('Suspensión manual por mora',`${c.num} — ${c.nombre}. Instrucción de corte enviada a Mikrotik.`);
+  toast(`${c.nombre} suspendido.`,'success');
+  closeModal();renderContratos();
+}
+
+function reactivarManual(id){
+  const c=getContrato(id);
+  c.estado='Activo';
+  c.mikrotikPendiente='conectar';
+  addAudit('Reactivación manual',`${c.num} — ${c.nombre}. Instrucción de reconexión enviada a Mikrotik.`);
+  toast(`${c.nombre} reactivado.`,'success');
+  renderContratos();
+}
+
+function abrirEditarFecha(id){
+  const c=getContrato(id);
+  if(!c) return;
+  openModal(`📅 Editar Fecha de Instalación — ${c.num}`,`
+    <div class="alert-box warning"><div class="a-body">Esta fecha define el ciclo de facturación automática cada 30 días de <strong>${c.nombre}</strong>. Las facturas que ya se generaron NO se modifican; solo cambia cuándo se genera la próxima.</div></div>
+    <div class="form-group"><label>Fecha de instalación</label><input type="date" id="ef-fecha" value="${c.fecha}"></div>
+    <div id="ef-err" class="err-msg" style="display:none"></div>
+  `,`<button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+     <button class="btn btn-primary" onclick="guardarFechaInicio(${id})">Guardar</button>`
+  );
+}
+
+function guardarFechaInicio(id){
+  const c=getContrato(id);
+  const nueva=$('ef-fecha').value;
+  const err=$('ef-err');
+  if(!nueva){err.textContent='Selecciona una fecha.';err.style.display='block';return;}
+  const anterior=c.fecha;
+  c.fecha=nueva;
+  // Próximo ciclo: desde la última factura ya generada de este cliente
+  // (si existe) o desde la nueva fecha de instalación.
+  const ultimasF=S.facturas.filter(f=>f.cId===c.id).map(f=>f.vence).sort();
+  const base=ultimasF.length?ultimasF[ultimasF.length-1]:nueva;
+  c.proximoVencimiento=addDias(base,30);
+  addAudit('Fecha de instalación editada',`${c.num} — ${c.nombre}: ${anterior} → ${nueva}. Próxima factura: ${c.proximoVencimiento}`);
+  toast('Fecha de instalación actualizada','success');
+  closeModal();renderContratos();
+}
+
+function abrirMAC(id){
+  const c=getContrato(id);
+  openModal(`Registrar Dirección MAC — ${c.num}`,`
+    <div class="alert-box info"><div class="a-title">📡 Control de Acceso Mikrotik</div><div class="a-body">Al registrar la MAC, el contrato cambia a estado <strong>Activo</strong> y se habilita el acceso en el router.</div></div>
+    <div class="form-grid cols1">
+      <div class="form-group"><label>Dirección MAC del Router Cliente *</label>
+        <input id="mac-val" value="${c.mac||''}" placeholder="AA:BB:CC:DD:EE:FF" style="font-family:'JetBrains Mono',monospace">
+        <span style="font-size:11px;color:var(--text2)">Formato: 6 grupos de 2 dígitos hexadecimales separados por ':'</span>
+      </div>
+      <div id="mac-err" class="err-msg" style="display:none"></div>
+    </div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+     <button class="btn btn-primary" onclick="guardarMAC(${id})">Registrar y Activar</button>`
+  );
+}
+
+function guardarMAC(id){
+  const mac=$('mac-val').value.trim().toUpperCase();
+  const err=$('mac-err');
+  const macReg=/^([0-9A-F]{2}[:\-]){5}[0-9A-F]{2}$/;
+  if(!macReg.test(mac)){err.textContent='Formato inválido. Use AA:BB:CC:DD:EE:FF';err.style.display='block';return;}
+  const dup=S.contratos.find(c=>c.mac===mac&&c.id!==id&&c.estado!=='Cancelado');
+  if(dup){err.textContent=`MAC ya registrada en contrato ${dup.num}.`;err.style.display='block';return;}
+  const c=getContrato(id);
+  c.mac=mac;
+  c.estado='Activo';
+  c.mikrotikPendiente='conectar';
+  if(!c.proximoVencimiento) c.proximoVencimiento=addDias(today(),30);
+  addAudit('MAC registrada',`${c.num} — MAC: ${mac} — Estado → Activo. Instrucción enviada a Mikrotik.`);
+  toast(`✅ MAC registrada. Contrato ${c.num} activado en Mikrotik.`,'success');
+  closeModal();renderContratos();
+}
+
+// Borrado permanente de un contrato y todo lo asociado a él (facturas, pagos, tickets).
+// Pide confirmación explícita porque no se puede deshacer.
+function confirmarBorrarContrato(id){
+  const c=getContrato(id);
+  if(!c) return;
+  const nFacturas=S.facturas.filter(f=>f.cId===id).length;
+  const nPagos=S.pagos.filter(p=>p.cId===id).length;
+  const nTickets=S.tickets.filter(t=>t.cId===id).length;
+  openModal(`🗑️ Borrar contrato ${c.num} definitivamente`,`
+    <div class="alert-box danger">
+      <div class="a-title">⚠️ Esta acción no se puede deshacer</div>
+      <div class="a-body">
+        Vas a borrar para siempre al cliente <strong>${c.nombre}</strong> (CC ${c.cedula}) y junto con él:
+        <ul style="margin:8px 0 0 18px;padding:0">
+          <li>${nFacturas} factura(s)</li>
+          <li>${nPagos} pago(s) registrado(s)</li>
+          <li>${nTickets} ticket(s) de soporte</li>
+        </ul>
+        Si solo quieres dejar de facturarle, es mejor cambiar su estado a "Cancelado" desde Editar Contrato en vez de borrarlo.
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Para confirmar, escribe la cédula del cliente (${c.cedula})</label>
+      <input id="del-confirm" placeholder="${c.cedula}">
+      <div id="del-err" class="err-msg" style="display:none"></div>
+    </div>
+  `,`<button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+     <button class="btn btn-red" style="background:var(--red);color:#fff" onclick="ejecutarBorrarContrato(${id})">Borrar definitivamente</button>`
+  );
+}
+
+function ejecutarBorrarContrato(id){
+  const c=getContrato(id);
+  const val=$('del-confirm').value.trim();
+  const err=$('del-err');
+  if(val!==c.cedula){err.textContent='La cédula no coincide. Escríbela exactamente para confirmar.';err.style.display='block';return;}
+  S.contratos=S.contratos.filter(x=>x.id!==id);
+  S.facturas=S.facturas.filter(f=>f.cId!==id);
+  S.pagos=S.pagos.filter(p=>p.cId!==id);
+  S.tickets=S.tickets.filter(t=>t.cId!==id);
+  addAudit('Contrato borrado definitivamente',`${c.num} — ${c.nombre} (CC ${c.cedula}) y todos sus datos asociados.`);
+  toast(`Contrato ${c.num} borrado definitivamente.`,'success');
+  closeModal();renderContratos();
+}
+
+function verFacturasCliente(cId){
+  const c=getContrato(cId);
+  const facts=S.facturas.filter(f=>f.cId===cId);
+  openModal(`Facturas — ${c.nombre}`,`
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Factura</th><th>Periodo</th><th>Base</th><th>Recargo</th><th>Total</th><th>Estado</th><th></th></tr></thead>
+      <tbody>${facts.map(f=>`
+        <tr><td class="mono">${f.num}</td><td>${f.periodo}</td><td>${fmt(f.base)}</td><td style="color:${f.recargo?'var(--red)':'var(--text2)'}">${f.recargo?fmt(f.recargo):'-'}</td><td>${fmt(facturaMonto(f))}</td><td>${estadoBadge(f.estado)}</td><td><button class="btn btn-outline btn-sm btn-icon" title="Imprimir" onclick="imprimirFactura(${f.id})">🖨️</button></td></tr>
+      `).join('')}${facts.length===0?`<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:24px">Sin facturas</td></tr>`:''}</tbody>
+    </table></div>`,`<button class="btn btn-outline" onclick="closeModal()">Cerrar</button>`
+  );
+}
+
+// ═══════════════════════════════ PLANES ═══════════════════════════════
+function renderPlanes(){
+  $('content').innerHTML=`
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">Planes de Internet</span><button class="btn btn-primary" onclick="abrirPlan()">＋ Nuevo Plan</button></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>ID</th><th>Nombre Comercial</th><th>Bajada</th><th>Subida</th><th>Precio/mes</th><th>Clientes</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody>${S.planes.map(p=>{
+        const cnt=S.contratos.filter(c=>c.planId===p.id&&c.estado!=='Cancelado').length;
+        return `<tr>
+          <td class="mono">${p.id}</td>
+          <td><strong>${p.nombre}</strong></td>
+          <td><span style="color:var(--accent);font-family:'JetBrains Mono',monospace">${p.bajada>=1000?p.bajada/1000+'Gbps':p.bajada+'Mbps'}</span> ↓</td>
+          <td><span style="color:var(--green);font-family:'JetBrains Mono',monospace">${p.subida>=1000?p.subida/1000+'Gbps':p.subida+'Mbps'}</span> ↑</td>
+          <td style="font-weight:600">${fmt(p.precio)}</td>
+          <td><span class="badge b-blue">${cnt} clientes</span></td>
+          <td>${p.activo?'<span class="badge b-green">Activo</span>':'<span class="badge b-gray">Inactivo</span>'}</td>
+          <td><div style="display:flex;gap:6px">
+            <button class="btn btn-outline btn-sm btn-icon" onclick="abrirPlan(${p.id})">✏️</button>
+            <button class="btn ${p.activo?'btn-danger':'btn-green'} btn-sm" onclick="togglePlan(${p.id},${cnt})">${p.activo?'Desactivar':'Activar'}</button>
+          </div></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function abrirPlan(id=null){
+  const p=id?S.planes.find(x=>x.id===id):{};
+  openModal(`${id?'Editar':'Nuevo'} Plan`,`
+    <div class="form-grid">
+      <div class="form-group span2"><label>Nombre Comercial *</label><input id="pl-nombre" value="${p.nombre||''}" placeholder="Ej: Plan Premium 200M"></div>
+      <div class="form-group"><label>Velocidad Bajada (Mbps) *</label><input id="pl-bajada" type="number" value="${p.bajada||''}" placeholder="100"></div>
+      <div class="form-group"><label>Velocidad Subida (Mbps)</label><input id="pl-subida" type="number" value="${p.subida||''}" placeholder="20"></div>
+      <div class="form-group"><label>Precio Mensual (COP) *</label><input id="pl-precio" type="number" value="${p.precio||''}" placeholder="65000"></div>
+      <div id="pl-warn" style="display:none;grid-column:span 2" class="alert-box warning"><div class="a-body"></div></div>
+      <div id="pl-err" class="span2 err-msg" style="display:none"></div>
+    </div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+     <button class="btn btn-primary" onclick="guardarPlan(${id||'null'})">Guardar</button>`
+  );
+  if(id){
+    const cnt=S.contratos.filter(c=>c.planId===id&&c.estado!=='Cancelado').length;
+    if(cnt>0){$('pl-warn').style.display='flex';$('pl-warn .a-body').textContent=`⚠️ Este plan tiene ${cnt} cliente(s) activo(s). Al modificar el precio, aplicará desde el próximo ciclo.`;}
+  }
+}
+
+function guardarPlan(id){
+  const nombre=$('pl-nombre').value.trim();
+  const bajada=parseInt($('pl-bajada').value);
+  const subida=parseInt($('pl-subida').value)||0;
+  const precio=parseInt($('pl-precio').value);
+  const err=$('pl-err');
+  if(!nombre||!bajada||!precio){err.textContent='Nombre, velocidad de bajada y precio son obligatorios.';err.style.display='block';return;}
+  if(id){
+    const p=S.planes.find(x=>x.id===id);
+    addAudit('Plan editado',`${p.nombre} → Precio: ${fmt(p.precio)} → ${fmt(precio)}`);
+    Object.assign(p,{nombre,bajada,subida,precio});
+    toast('Plan actualizado','success');
+  } else {
+    const newId=S.nextIds.plan++;
+    S.planes.push({id:newId,nombre,bajada,subida,precio,activo:true});
+    addAudit('Plan creado',`${nombre} — ${fmt(precio)}/mes`);
+    toast('Plan creado correctamente','success');
+  }
+  closeModal();renderPlanes();
+}
+
+function togglePlan(id,cnt){
+  const p=S.planes.find(x=>x.id===id);
+  if(p.activo&&cnt>0){toast('No se puede desactivar: tiene clientes activos. Use "Cancelar contratos" primero.','error');return;}
+  p.activo=!p.activo;
+  addAudit(`Plan ${p.activo?'activado':'desactivado'}`,p.nombre);
+  toast(`Plan ${p.activo?'activado':'desactivado'}`,'info');
+  renderPlanes();
+}
+
+// ═══════════════════════════════ FACTURACIÓN ═══════════════════════════════
+function renderFacturacion(filtro=''){
+  const mesActual=today().slice(0,7);
+  let facts=filtro?S.facturas.filter(f=>{
+    const c=getContrato(f.cId);
+    return f.num.toLowerCase().includes(filtro)||c?.nombre.toLowerCase().includes(filtro)||c?.num.toLowerCase().includes(filtro)||(c?.apto||'').toLowerCase().includes(filtro);
+  }):S.facturas;
+  // Primero las del mes actual, luego el resto (más recientes primero dentro de cada grupo)
+  facts=[...facts].sort((a,b)=>{
+    const aActual=a.periodo===mesActual?0:1, bActual=b.periodo===mesActual?0:1;
+    if(aActual!==bActual) return aActual-bActual;
+    return b.vence.localeCompare(a.vence);
+  });
+  $('content').innerHTML=`
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">Facturas (${facts.length})</span>
+      <button class="btn btn-primary" onclick="generarFacturaManual()">⚡ Verificar Facturación Ahora</button>
+    </div>
+    <div style="padding:16px 20px 0">
+      <div class="search-bar">
+        <input class="search-input" placeholder="Buscar factura, cliente o apartamento..." oninput="renderFacturacion(this.value.toLowerCase())">
+        <select onchange="filtrarEstadoFactura(this.value)" style="max-width:160px">
+          <option value="">Todos los estados</option>
+          <option>Pendiente</option><option>Pagada</option><option>Vencida</option>
+        </select>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Factura</th><th>Apartamento</th><th>Cliente</th><th>Periodo</th><th>Base</th><th>Recargo</th><th>Total</th><th>Vence</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody>${facts.map(f=>{
+        const c=getContrato(f.cId);
+        return `<tr>
+          <td class="mono">${f.num}</td>
+          <td style="font-weight:600">${c?.apto?'Apto '+c.apto:'<span style="color:var(--text3);font-weight:400">Sin apto</span>'}</td>
+          <td>${c?.nombre.split(' ').slice(0,2).join(' ')||'—'}</td>
+          <td>${f.periodo}</td>
+          <td>${fmt(f.base)}</td>
+          <td style="color:${f.recargo?'var(--red)':'var(--text3)'}">${f.recargo?fmt(f.recargo):'—'}</td>
+          <td style="font-weight:600">${fmt(facturaMonto(f))}</td>
+          <td class="mono" style="font-size:11px">${f.vence}</td>
+          <td>${estadoBadge(f.estado)}</td>
+          <td style="display:flex;gap:6px">
+            <button class="btn btn-outline btn-sm btn-icon" title="Imprimir factura" onclick="imprimirFactura(${f.id})">🖨️</button>
+            ${f.estado!=='Pagada'?`<button class="btn btn-primary btn-sm" title="Pago rápido" onclick="abrirPagoRapido(${f.id})">⚡ Pago</button>`:''}
+          </td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>
+  </div>`;
+}
+
+// Imprime una factura respetando el ciclo de facturación real del contrato
+// (30 días contados desde su fecha de inicio), no el mes calendario.
+function imprimirFactura(id){
+  const f=getFactura(id);
+  if(!f){toast('Factura no encontrada','error');return;}
+  const c=getContrato(f.cId);
+  const pl=c?getPlan(c.planId):null;
+  const inicioPeriodo=addDias(f.vence,-30);
+  const win=window.open('','_blank','width=800,height=900');
+  if(!win){toast('Habilita las ventanas emergentes para imprimir','error');return;}
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Factura ${f.num}</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;padding:36px;color:#111;max-width:720px;margin:0 auto}
+    .head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:14px;margin-bottom:20px}
+    .head h1{font-size:20px;margin:0}
+    .head .sub{color:#555;font-size:12px;margin-top:2px}
+    .num{font-size:22px;font-weight:bold;text-align:right}
+    .estado{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-top:6px}
+    .box{background:#f5f5f5;border-radius:8px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.6}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    td,th{border:1px solid #ddd;padding:10px;font-size:13px;text-align:left}
+    tfoot td{font-weight:bold;font-size:15px}
+    .foot{margin-top:30px;font-size:11px;color:#777;text-align:center}
+    @media print{ .no-print{display:none} }
+  </style></head><body>
+    <div class="head">
+      <div>
+        <h1>${S.config.empresa}</h1>
+        <div class="sub">NIT: ${S.config.nit}</div>
+      </div>
+      <div>
+        <div class="num">${f.num}</div>
+        <div class="estado" style="background:${f.estado==='Pagada'?'#DCFCE7;color:#166534':f.estado==='Vencida'?'#FEE2E2;color:#991B1B':'#FEF3C7;color:#92400E'}">${f.estado}</div>
+      </div>
+    </div>
+    <div class="box">
+      <strong>Cliente:</strong> ${c?c.nombre:'—'} — CC ${c?c.cedula:'—'}<br>
+      <strong>Contrato:</strong> ${c?c.num:'—'} &nbsp; | &nbsp; <strong>Dirección:</strong> ${c?c.dir:'—'}<br>
+      <strong>Teléfono:</strong> ${c?c.tel:'—'} ${c?.email?`&nbsp; | &nbsp; <strong>Correo:</strong> ${c.email}`:''}
+    </div>
+    <div class="box">
+      <strong>Período facturado:</strong> ${inicioPeriodo} a ${f.vence} (ciclo de 30 días desde el inicio del contrato)<br>
+      <strong>Fecha de vencimiento:</strong> ${f.vence}
+      ${f.fechaPago?`<br><strong>Fecha de pago:</strong> ${f.fechaPago}`:''}
+    </div>
+    <table>
+      <thead><tr><th>Concepto</th><th style="text-align:right">Valor</th></tr></thead>
+      <tbody>
+        <tr><td>${pl?pl.nombre:'Plan de Internet'} — ${pl?`${pl.bajada}/${pl.subida} Mbps`:''}</td><td style="text-align:right">${fmt(f.base)}</td></tr>
+        ${f.recargo?`<tr><td>Recargo por mora</td><td style="text-align:right">${fmt(f.recargo)}</td></tr>`:''}
+      </tbody>
+      <tfoot><tr><td>Total</td><td style="text-align:right">${fmt(facturaMonto(f))}</td></tr></tfoot>
+    </table>
+    <div class="foot">Documento generado por el sistema de gestión ISP — ${S.config.empresa}</div>
+    <div class="no-print" style="text-align:center;margin-top:20px"><button onclick="window.print()" style="padding:10px 20px;cursor:pointer">Imprimir</button></div>
+  </body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(()=>{ try{ win.print(); }catch(e){} },300);
+}
+
+function filtrarEstadoFactura(est){
+  const mesActual=today().slice(0,7);
+  let facts=est?S.facturas.filter(f=>f.estado===est):S.facturas;
+  facts=[...facts].sort((a,b)=>{
+    const aActual=a.periodo===mesActual?0:1, bActual=b.periodo===mesActual?0:1;
+    if(aActual!==bActual) return aActual-bActual;
+    return b.vence.localeCompare(a.vence);
+  });
+  // Re-render with filter
+  const cont=$('content');
+  const tbody=cont.querySelector('tbody');
+  if(tbody) tbody.innerHTML=facts.map(f=>{
+    const c=getContrato(f.cId);
+    return `<tr><td class="mono">${f.num}</td><td style="font-weight:600">${c?.apto?'Apto '+c.apto:'<span style="color:var(--text3);font-weight:400">Sin apto</span>'}</td><td>${c?.nombre.split(' ').slice(0,2).join(' ')||'—'}</td><td>${f.periodo}</td><td>${fmt(f.base)}</td><td style="color:${f.recargo?'var(--red)':'var(--text3)'}">${f.recargo?fmt(f.recargo):'—'}</td><td style="font-weight:600">${fmt(facturaMonto(f))}</td><td class="mono" style="font-size:11px">${f.vence}</td><td>${estadoBadge(f.estado)}</td><td><button class="btn btn-outline btn-sm btn-icon" title="Imprimir factura" onclick="imprimirFactura(${f.id})">🖨️</button></td></tr>`;
+  }).join('')||'<tr><td colspan="10" style="text-align:center;color:var(--text2);padding:20px">Sin facturas con este estado</td></tr>';
+}
+
+function generarFacturaManual(){
+  const antesF=S.facturas.length, antesV=S.facturas.filter(f=>f.estado==='Vencida').length;
+  procesarFacturacionAutomatica();
+  const nuevasF=S.facturas.length-antesF;
+  const nuevasV=S.facturas.filter(f=>f.estado==='Vencida').length-antesV;
+  toast(`✅ Verificación completa: ${nuevasF} factura(s) nueva(s), ${nuevasV} pasó(pasaron) a Vencida. La suspensión sigue siendo manual.`,'success');
+  renderFacturacion();
+}
+
+// ═══════════════════════════════ RECAUDO ═══════════════════════════════
+// Pago rápido desde la tabla de Facturación: abre un modal directo con la
+// factura ya seleccionada, sin tener que ir a Recaudo a buscarla.
+function abrirPagoRapido(fId){
+  const f=getFactura(fId);
+  if(!f) return;
+  if(f.estado==='Pagada'){toast('Esta factura ya está pagada.','info');return;}
+  const c=getContrato(f.cId);
+  const pl=c?getPlan(c.planId):null;
+  window._facturaSeleccionada=f;
+  window._pagoOrigen='facturacion';
+  openModal(`⚡ Pago Rápido — ${f.num}`,`
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px;font-size:13px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><span style="color:var(--text2);font-size:11px">Cliente:</span><div>${c?.nombre||'—'}</div></div>
+        <div><span style="color:var(--text2);font-size:11px">Contrato:</span><div class="mono">${c?.num||'—'}</div></div>
+        <div><span style="color:var(--text2);font-size:11px">Plan:</span><div>${pl?.nombre||'—'}</div></div>
+        <div><span style="color:var(--text2);font-size:11px">Periodo:</span><div>${f.periodo}</div></div>
+      </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <span style="color:var(--text2)">Valor base: ${fmt(f.base)}</span>
+        ${f.recargo?`<span style="color:var(--red)">+ Recargo mora: ${fmt(f.recargo)}</span>`:''}
+        <span style="font-size:16px;font-weight:700;color:var(--accent)">Total: ${fmt(facturaMonto(f))}</span>
+      </div>
+    </div>
+    <div class="form-group"><label>Monto Recibido (COP) *</label><input id="r-monto" type="number" value="${facturaMonto(f)}"></div>
+    <div class="form-group"><label>Medio de Pago *</label>
+      <select id="r-medio"><option>Efectivo</option><option>Transferencia</option><option>Nequi/Daviplata</option><option>Tarjeta débito</option></select>
+    </div>
+    <div id="r-warn" class="alert-box warning" style="display:none"><div class="a-body"></div></div>
+    <div id="r-err" class="err-msg" style="display:none"></div>
+  `,`<button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+     <button class="btn btn-primary" onclick="confirmarPago()">✅ Confirmar Pago y Generar Recibo</button>`
+  );
+}
+
+function renderRecaudo(){
+  window._pagoOrigen='recaudo';
+  $('content').innerHTML=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">💳 Registrar Pago</span></div>
+      <div class="panel-body">
+        <div class="form-grid cols1" style="gap:14px">
+          <div class="form-group">
+            <label>Buscar Factura</label>
+            <div style="display:flex;gap:8px">
+              <input id="r-buscar" placeholder="N° factura o nombre cliente..." style="flex:1">
+              <button class="btn btn-outline" onclick="buscarFactura()">🔍</button>
+            </div>
+          </div>
+          <div id="r-result" style="display:none">
+            <div id="r-info" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px;font-size:13px"></div>
+            <div class="form-group"><label>Monto Recibido (COP) *</label><input id="r-monto" type="number" placeholder="0"></div>
+            <div class="form-group"><label>Medio de Pago *</label>
+              <select id="r-medio"><option>Efectivo</option><option>Transferencia</option><option>Nequi/Daviplata</option><option>Tarjeta débito</option></select>
+            </div>
+            <div id="r-warn" class="alert-box warning" style="display:none"><div class="a-body"></div></div>
+            <div id="r-err" class="err-msg" style="display:none"></div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="confirmarPago()">✅ Confirmar Pago y Generar Recibo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Últimos pagos del día</span></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Hora</th><th>Cliente</th><th>Factura</th><th>Monto</th><th>Medio</th></tr></thead>
+        <tbody>${S.pagos.slice(-8).reverse().map(p=>{
+          const c=getContrato(p.cId);
+          return `<tr><td class="mono" style="font-size:11px">${p.fecha.split(' ')[1]||p.fecha}</td><td>${c?.nombre.split(' ')[0]||'—'}</td><td class="mono" style="font-size:11px">${S.facturas.find(f=>f.id===p.fId)?.num||'—'}</td><td style="color:var(--green)">${fmt(p.monto)}</td><td><span class="badge b-blue">${p.medio}</span></td></tr>`;
+        }).join('')}${S.pagos.length===0?'<tr><td colspan="5" style="text-align:center;color:var(--text2);padding:24px">Sin pagos hoy</td></tr>':''}</tbody>
+      </table></div>
+    </div>
+  </div>`;
+  window._facturaSeleccionada=null;
+}
+
+function buscarFactura(){
+  const q=$('r-buscar').value.trim().toLowerCase();
+  let factura=S.facturas.find(f=>f.num.toLowerCase()===q)||
+              S.facturas.find(f=>{const c=getContrato(f.cId);return c&&(c.nombre.toLowerCase().includes(q)||c.cedula.includes(q))&&f.estado!=='Pagada';});
+  const res=$('r-result');
+  const info=$('r-info');
+  if(!factura){info.innerHTML='<span style="color:var(--red)">❌ No se encontró factura pendiente con ese criterio.</span>';res.style.display='block';window._facturaSeleccionada=null;$('r-monto').style.display='none';return;}
+  if(factura.estado==='Pagada'){info.innerHTML=`<span style="color:var(--text2)">Esta factura ya fue pagada el ${factura.fechaPago}.</span>`;res.style.display='block';window._facturaSeleccionada=null;return;}
+  window._facturaSeleccionada=factura;
+  const c=getContrato(factura.cId);
+  const pl=getPlan(c?.planId);
+  $('r-monto').style.display='block';
+  info.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><span style="color:var(--text2);font-size:11px">Factura:</span><div class="mono">${factura.num}</div></div>
+      <div><span style="color:var(--text2);font-size:11px">Estado:</span><div>${estadoBadge(factura.estado)}</div></div>
+      <div><span style="color:var(--text2);font-size:11px">Cliente:</span><div>${c?.nombre||'—'}</div></div>
+      <div><span style="color:var(--text2);font-size:11px">Contrato:</span><div class="mono">${c?.num||'—'}</div></div>
+      <div><span style="color:var(--text2);font-size:11px">Plan:</span><div>${pl?.nombre||'—'}</div></div>
+      <div><span style="color:var(--text2);font-size:11px">Periodo:</span><div>${factura.periodo}</div></div>
+    </div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <span style="color:var(--text2)">Valor base: ${fmt(factura.base)}</span>
+      ${factura.recargo?`<span style="color:var(--red)">+ Recargo mora: ${fmt(factura.recargo)}</span>`:''}
+      <span style="font-size:16px;font-weight:700;color:var(--accent)">Total: ${fmt(facturaMonto(factura))}</span>
+    </div>`;
+  $('r-monto').value=facturaMonto(factura);
+  res.style.display='block';
+}
+
+function confirmarPago(){
+  const f=window._facturaSeleccionada;
+  if(!f){toast('Busque primero una factura','error');return;}
+  const monto=parseInt($('r-monto').value);
+  const medio=$('r-medio').value;
+  const total=facturaMonto(f);
+  const err=$('r-err');
+  const warn=$('r-warn');
+  err.style.display='none';warn.style.display='none';
+  if(!monto||monto<=0){err.textContent='Ingrese el monto recibido.';err.style.display='block';return;}
+  if(monto!==total){
+    warn.style.display='flex';
+    $('r-warn .a-body').textContent=`⚠️ Monto ingresado (${fmt(monto)}) ≠ Monto adeudado (${fmt(total)}). ¿Confirmar de todas formas?`;
+    warn.innerHTML+=`<button class="btn btn-orange btn-sm" style="margin-top:8px;background:var(--orange);color:#000" onclick="_ejecutarPago()">Confirmar de todas formas</button>`;
+    return;
+  }
+  _ejecutarPago();
+}
+
+function _ejecutarPago(){
+  const f=window._facturaSeleccionada;
+  const monto=parseInt($('r-monto').value);
+  const medio=$('r-medio').value;
+  const c=getContrato(f.cId);
+  const fechaPago=nowISO();
+  f.estado='Pagada';f.fechaPago=fechaPago;f.cajero=S.user.u;
+  const newPago={id:S.nextIds.pago++,fId:f.id,cId:f.cId,monto,fecha:fechaPago,medio,cajero:S.user.u};
+  S.pagos.push(newPago);
+  // Reactivar si estaba suspendido
+  const reactivar=c.estado==='Suspendido por mora';
+  if(reactivar){c.estado='Activo';c.mikrotikPendiente='conectar';addAudit('Reactivación automática',`${c.num} — ${c.nombre}. Instrucción enviada a Mikrotik RouterOS.`);}
+  addAudit('Registro de pago',`${f.num} | ${c.num} | ${fmt(monto)} | ${medio}`);
+  window._facturaSeleccionada=null;
+  closeModal();
+  // Show receipt modal
+  abrirRecibo(f.id,newPago.id,reactivar);
+}
+
+function abrirRecibo(fId,pId,reactivar){
+  const f=getFactura(fId);
+  const p=S.pagos.find(x=>x.id===pId);
+  const c=getContrato(f.cId);
+  const pl=getPlan(c.planId);
+  openModal('🧾 Recibo de Caja',`
+    ${reactivar?`<div class="alert-box success"><div class="a-title">✅ Servicio reactivado automáticamente</div><div class="a-body">La instrucción fue enviada al router Mikrotik. Servicio activo en máx. 5 minutos.</div></div>`:''}
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px">
+      <div style="text-align:center;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent)">${S.config.empresa}</div>
+        <div style="font-size:11px;color:var(--text2)">NIT: ${S.config.nit} — Recibo de Caja</div>
+        <div class="mono" style="font-size:11px;color:var(--text2)">${p.fecha}</div>
+      </div>
+      <div class="info-grid" style="gap:10px;margin-bottom:14px">
+        <div class="info-item"><label>Cliente</label><div class="val">${c.nombre}</div></div>
+        <div class="info-item"><label>Contrato</label><div class="val mono">${c.num}</div></div>
+        <div class="info-item"><label>Factura</label><div class="val mono">${f.num}</div></div>
+        <div class="info-item"><label>Periodo</label><div class="val">${f.periodo}</div></div>
+        <div class="info-item"><label>Plan</label><div class="val">${pl?.nombre}</div></div>
+        <div class="info-item"><label>Medio de Pago</label><div class="val">${p.medio}</div></div>
+      </div>
+      <div style="background:var(--surface3);border-radius:8px;padding:14px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span>Servicio de internet</span><span>${fmt(f.base)}</span></div>
+        ${f.recargo?`<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;color:var(--red)"><span>Recargo por mora (${S.config.porcMora}%)</span><span>${fmt(f.recargo)}</span></div>`:''}
+        <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;color:var(--green);border-top:1px solid var(--border);padding-top:10px;margin-top:6px"><span>TOTAL PAGADO</span><span>${fmt(p.monto)}</span></div>
+      </div>
+      <div style="text-align:center;margin-top:12px"><span class="badge b-green" style="font-size:14px;padding:6px 18px">✓ PAGADO</span></div>
+    </div>`,
+    `<button class="btn btn-outline" onclick="closeModal();${window._pagoOrigen==='facturacion'?'renderFacturacion()':'renderRecaudo()'}">Cerrar</button>
+     <button class="btn btn-primary" onclick="toast('PDF generado y enviado a ${c.email}','success')">📄 Enviar por Email</button>`
+  );
+}
+
+// ═══════════════════════════════ CIERRE DE CAJA ═══════════════════════════════
+function renderCierre(){
+  const hoy=today();
+  const pagosHoy=S.pagos.filter(p=>p.fecha.startsWith(hoy));
+  const efectivo=pagosHoy.filter(p=>p.medio==='Efectivo').reduce((a,p)=>a+p.monto,0);
+  const otros=pagosHoy.filter(p=>p.medio!=='Efectivo').reduce((a,p)=>a+p.monto,0);
+  $('content').innerHTML=`
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">Cierre de Caja — ${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</span>
+      ${S.cierreHoy?'<span class="badge b-green">✓ Cierre generado</span>':
+        `<button class="btn btn-primary" onclick="generarCierre()">${pagosHoy.length===0?'Generar Cierre (sin movimientos)':'🔒 Generar y Cerrar Caja'}</button>`}
+    </div>
+    <div class="panel-body">
+      <div class="kpi-grid" style="margin-bottom:20px">
+        <div class="kpi-card green"><div class="kpi-label">Total Efectivo</div><div class="kpi-val" style="color:var(--green)">${fmt(efectivo)}</div></div>
+        <div class="kpi-card accent"><div class="kpi-label">Otros Medios</div><div class="kpi-val" style="color:var(--accent)">${fmt(otros)}</div></div>
+        <div class="kpi-card" style="grid-column:span 2"><div class="kpi-label">Gran Total del Día</div><div class="kpi-val" style="color:var(--text)">${fmt(efectivo+otros)}</div><div class="kpi-sub">${pagosHoy.length} transacción(es)</div></div>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Hora</th><th>Factura</th><th>Cliente</th><th>Contrato</th><th>Monto</th><th>Medio</th></tr></thead>
+        <tbody>${pagosHoy.map(p=>{
+          const f=S.facturas.find(x=>x.id===p.fId);
+          const c=getContrato(p.cId);
+          return `<tr><td class="mono" style="font-size:11px">${p.fecha.split(' ')[1]||'—'}</td><td class="mono">${f?.num||'—'}</td><td>${c?.nombre.split(' ').slice(0,2).join(' ')||'—'}</td><td class="mono">${c?.num||'—'}</td><td style="color:var(--green)">${fmt(p.monto)}</td><td><span class="badge b-blue">${p.medio}</span></td></tr>`;
+        }).join('')}${pagosHoy.length===0?'<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:28px">Sin pagos registrados hoy</td></tr>':''}</tbody>
+        ${pagosHoy.length>0?`<tfoot><tr style="background:var(--surface2)"><td colspan="4" style="padding:11px 14px;font-weight:700">TOTAL</td><td style="padding:11px 14px;font-weight:700;color:var(--green)">${fmt(efectivo+otros)}</td><td></td></tr></tfoot>`:''} 
+      </table></div>
+      <div style="margin-top:14px;font-size:12px;color:var(--text2)">Responsable: ${S.user.nombre} (${S.user.u})</div>
+    </div>
+  </div>`;
+}
+
+function generarCierre(){
+  if(S.cierreHoy){toast('El cierre de hoy ya fue generado.','info');return;}
+  S.cierreHoy=true;
+  addAudit('Cierre de caja diario',`Cajero: ${S.user.u} — ${new Date().toLocaleDateString('es-CO')}`);
+  toast('✅ Cierre de caja generado. Exportar en PDF.','success');
+  renderCierre();
+}
+
+// ═══════════════════════════════ CARTERA VENCIDA ═══════════════════════════════
+function renderCartera(){
+  const vencidas=S.facturas.filter(f=>f.estado==='Vencida');
+  const total=vencidas.reduce((a,f)=>a+facturaMonto(f),0);
+  $('content').innerHTML=`
+  <div class="kpi-grid">
+    <div class="kpi-card red"><div class="kpi-label">Total Cartera Vencida</div><div class="kpi-val" style="color:var(--red)">${fmt(total)}</div><div class="kpi-sub">${vencidas.length} factura(s) sin pago</div></div>
+    <div class="kpi-card orange"><div class="kpi-label">Clientes en Mora</div><div class="kpi-val" style="color:var(--orange)">${[...new Set(vencidas.map(f=>f.cId))].length}</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">Reporte de Cartera Vencida</span>
+      <button class="btn btn-outline" onclick="toast('Exportando reporte a Excel...','info')">📊 Exportar Excel</button>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Contrato</th><th>Cliente</th><th>Plan</th><th>Factura</th><th>Periodo</th><th>Valor Base</th><th>Recargo Mora</th><th>Total Adeudado</th><th>Días Vencido</th><th>Estado Servicio</th></tr></thead>
+      <tbody>${vencidas.map(f=>{
+        const c=getContrato(f.cId);
+        const pl=getPlan(c?.planId);
+        const dias=Math.floor((Date.now()-new Date(f.vence).getTime())/(86400000));
+        const critico=dias>30;
+        return `<tr style="${critico?'background:rgba(255,71,87,.05)':''}">
+          <td class="mono">${c?.num||'—'}</td>
+          <td>${c?.nombre||'—'}${critico?'<span class="badge b-red" style="margin-left:6px;font-size:10px">CRÍTICO</span>':''}</td>
+          <td style="font-size:12px">${pl?.nombre||'—'}</td>
+          <td class="mono">${f.num}</td>
+          <td>${f.periodo}</td>
+          <td>${fmt(f.base)}</td>
+          <td style="color:var(--red)">${f.recargo?fmt(f.recargo):'—'}</td>
+          <td style="font-weight:700;color:${critico?'var(--red)':'var(--orange)'}">${fmt(facturaMonto(f))}</td>
+          <td style="color:${critico?'var(--red)':'var(--orange)'}"><strong>${dias}d</strong></td>
+          <td>${estadoBadge(c?.estado||'—')}</td>
+        </tr>`;
+      }).join('')}${vencidas.length===0?'<tr><td colspan="10" style="text-align:center;color:var(--text2);padding:28px">✅ Sin cartera vencida</td></tr>':''}</tbody>
+    </table></div>
+  </div>`;
+}
+
+// ═══════════════════════════════ INGRESOS ═══════════════════════════════
+function renderIngresos(){
+  const meses=mesesDisponiblesDashboard();
+  const mesActual=today().slice(0,7);
+  $('content').innerHTML=`
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">Reporte Consolidado de Ingresos</span>
+      <div style="display:flex;gap:10px">
+        <select id="rp-mes" onchange="actualizarReporteIngresos()">
+          ${meses.map(m=>`<option value="${m}" ${m===mesActual?'selected':''}>${new Date(m+'-02').toLocaleDateString('es-CO',{month:'long',year:'numeric'})}</option>`).join('')}
+        </select>
+        <button class="btn btn-outline" onclick="toast('Exportando a Excel...','info')">📊 Excel</button>
+        <button class="btn btn-outline" onclick="toast('Generando PDF...','info')">📄 PDF</button>
+      </div>
+    </div>
+    <div class="panel-body" id="reporte-body"></div>
+  </div>`;
+  actualizarReporteIngresos();
+}
+
+function actualizarReporteIngresos(){
+  const periodo=$('rp-mes')?.value||today().slice(0,7);
+  const pagosP=S.pagos.filter(p=>p.fecha.startsWith(periodo));
+  const factsP=S.facturas.filter(f=>f.periodo===periodo&&f.estado==='Pagada');
+  const totalBase=factsP.reduce((a,f)=>a+f.base,0);
+  const totalRecargos=factsP.reduce((a,f)=>a+f.recargo,0);
+  const total=totalBase+totalRecargos;
+  // Group by plan
+  const porPlan={};
+  factsP.forEach(f=>{
+    const c=getContrato(f.cId);const pl=getPlan(c?.planId);
+    const k=pl?.nombre||'Otros';
+    if(!porPlan[k]){porPlan[k]={nombre:k,precio:pl?.precio||0,cnt:0,base:0,recargos:0};}
+    porPlan[k].cnt++;porPlan[k].base+=f.base;porPlan[k].recargos+=f.recargo;
+  });
+  const activos=S.contratos.filter(c=>c.estado==='Activo').length;
+  const suspendidos=S.contratos.filter(c=>c.estado==='Suspendido por mora').length;
+  $('reporte-body').innerHTML=`
+    <div class="kpi-grid" style="margin-bottom:20px">
+      <div class="kpi-card green"><div class="kpi-label">Total Recaudado</div><div class="kpi-val" style="color:var(--green)">${fmt(total)}</div></div>
+      <div class="kpi-card accent"><div class="kpi-label">Valor Base Servicio</div><div class="kpi-val" style="color:var(--accent)">${fmt(totalBase)}</div></div>
+      <div class="kpi-card red"><div class="kpi-label">Recargos por Mora</div><div class="kpi-val" style="color:var(--red)">${fmt(totalRecargos)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Clientes al Cierre</div><div class="kpi-val">${activos}</div><div class="kpi-sub">${suspendidos} suspendidos</div></div>
+    </div>
+    <h3 style="font-family:'Syne',sans-serif;font-size:14px;margin-bottom:12px;color:var(--text2)">Desglose por Plan</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Plan</th><th>Precio/mes</th><th>Clientes Pagaron</th><th>Subtotal Servicio</th><th>Subtotal Recargos</th><th>Total Plan</th></tr></thead>
+      <tbody>${Object.values(porPlan).map(r=>`
+        <tr><td>${r.nombre}</td><td>${fmt(r.precio)}</td><td><span class="badge b-blue">${r.cnt}</span></td><td>${fmt(r.base)}</td><td style="color:var(--red)">${r.recargos?fmt(r.recargos):'—'}</td><td style="font-weight:600">${fmt(r.base+r.recargos)}</td></tr>
+      `).join('')}${Object.keys(porPlan).length===0?`<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px">Sin pagos en este periodo</td></tr>`:''}</tbody>
+      ${Object.keys(porPlan).length>0?`<tfoot><tr style="background:var(--surface2)"><td colspan="2" style="padding:11px 14px;font-weight:700">TOTAL GENERAL</td><td style="padding:11px 14px"><span class="badge b-blue">${factsP.length}</span></td><td style="padding:11px 14px;font-weight:700">${fmt(totalBase)}</td><td style="padding:11px 14px;font-weight:700;color:var(--red)">${fmt(totalRecargos)}</td><td style="padding:11px 14px;font-weight:700;color:var(--green)">${fmt(total)}</td></tr></tfoot>`:''}
+    </table></div>
+    ${S.user.rol==='contador'?`<div class="alert-box info" style="margin-top:16px"><div class="a-title">ℹ️ Perfil de solo lectura</div><div class="a-body">Como Contador, solo puede consultar y exportar. No puede modificar datos del sistema.</div></div>`:''}`;
+}
+
+// ═══════════════════════════════ TICKETS ═══════════════════════════════
+function renderTickets(filtro=''){
+  const tickets=filtro?S.tickets.filter(t=>t.estado===filtro):S.tickets;
+  $('content').innerHTML=`
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">Tickets de Soporte (${tickets.length})</span>
+      <div style="display:flex;gap:8px">
+        <select onchange="renderTickets(this.value)"><option value="">Todos</option><option>Abierto</option><option>Resuelto</option></select>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Ticket</th><th>Cliente</th><th>Tipo de Falla</th><th>Descripción</th><th>Fecha Reporte</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody>${tickets.map(t=>{
+        const c=getContrato(t.cId);
+        return `<tr>
+          <td class="mono">${t.num}</td>
+          <td>${c?.nombre.split(' ').slice(0,2).join(' ')||'—'}<div style="font-size:11px;color:var(--text2)">${c?.num||''}</div></td>
+          <td style="font-size:12px">${t.tipo}</td>
+          <td style="font-size:12px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.desc}</td>
+          <td class="mono" style="font-size:11px">${t.inicio}</td>
+          <td>${estadoBadge(t.estado)}</td>
+          <td>${t.estado==='Abierto'?`<button class="btn btn-green btn-sm" onclick="resolverTicket(${t.id})">Resolver</button>`:
+              `<span style="font-size:12px;color:var(--text2)">${t.solucion.slice(0,40)}...</span>`}
+          </td>
+        </tr>`;
+      }).join('')}${tickets.length===0?'<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:28px">Sin tickets</td></tr>':''}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function resolverTicket(id){
+  openModal('Resolver Ticket',`
+    <div class="form-grid cols1">
+      <div class="form-group"><label>Solución aplicada *</label><textarea id="t-sol" placeholder="Describa la solución técnica aplicada..."></textarea></div>
+    </div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+     <button class="btn btn-green" onclick="_resolverTicket(${id})">✅ Marcar como Resuelto</button>`
+  );
+}
+function _resolverTicket(id){
+  const sol=$('t-sol').value.trim();
+  if(!sol){toast('Ingrese la solución aplicada.','error');return;}
+  const t=S.tickets.find(x=>x.id===id);
+  t.estado='Resuelto';t.solucion=sol;
+  addAudit('Ticket resuelto',`${t.num} — ${sol.slice(0,60)}`);
+  toast('Ticket marcado como resuelto','success');
+  closeModal();renderTickets();
+}
+
+// ═══════════════════════════════ AUDITORÍA ═══════════════════════════════
+function renderAuditoria(){
+  $('content').innerHTML=`
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">Log de Auditoría</span><span style="font-size:12px;color:var(--text2)">Conservación mínima: 3 años (Decreto 2649/1993)</span></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>ID</th><th>Fecha / Hora</th><th>Usuario</th><th>Acción</th><th>Detalle</th></tr></thead>
+      <tbody>${S.audit.map(a=>`
+        <tr><td class="mono" style="color:var(--text3)">#${a.id}</td><td class="mono" style="font-size:11px">${a.fecha}</td>
+        <td><span class="badge b-blue">${a.usuario}</span></td><td style="font-weight:500">${a.accion}</td>
+        <td style="font-size:12px;color:var(--text2)">${a.detalle}</td></tr>
+      `).join('')}</tbody>
+    </table></div>
+  </div>`;
+}
+
+// ═══════════════════════════════ CONFIGURACIÓN ═══════════════════════════════
+function renderConfig(){
+  $('content').innerHTML=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">⚙️ Reglas de Negocio</span></div>
+      <div class="panel-body">
+        <div class="alert-box warning" style="margin-bottom:16px"><div class="a-title">⚠️ Impacto en producción</div><div class="a-body">Los cambios aplican desde el día siguiente. Se requiere confirmación antes de guardar.</div></div>
+        <div class="form-grid cols1" style="gap:14px">
+          <div class="form-group"><label>Porcentaje de Recargo por Mora (%)</label><input id="cfg-mora" type="number" value="${S.config.porcMora}" min="0" max="100"></div>
+          <div class="form-group"><label>Días de Gracia antes de Recargo</label><input id="cfg-gracia" type="number" value="${S.config.diasGracia}" min="0" max="30"></div>
+          <div class="form-group"><label>Horario de Corte Automático</label><input id="cfg-corte" type="time" value="${S.config.horarioCorte}"></div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="confirmarConfig()">Guardar Cambios</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">🏢 Datos de la Empresa</span></div>
+      <div class="panel-body">
+        <div class="form-grid cols1" style="gap:14px">
+          <div class="form-group"><label>Nombre de la Empresa</label><input id="cfg-empresa" value="${S.config.empresa}"></div>
+          <div class="form-group"><label>NIT</label><input id="cfg-nit" value="${S.config.nit}" style="font-family:'JetBrains Mono',monospace"></div>
+          <div class="form-group">
+            <label>Logo de la empresa</label>
+            <div style="display:flex;align-items:center;gap:12px">
+              ${S.config.logoBase64?`<img src="${S.config.logoBase64}" style="height:44px;max-width:120px;object-fit:contain;background:#fff;border-radius:6px;padding:4px">`:'<div style="font-size:11px;color:var(--text2)">Sin logo — se muestra el nombre en texto</div>'}
+              <input type="file" id="cfg-logo" accept="image/png,image/jpeg,image/svg+xml" style="flex:1">
+            </div>
+            <span style="font-size:11px;color:var(--text2)">Imagen pequeña (ideal &lt; 200 KB). Se muestra en el login y en el menú lateral.</span>
+          </div>
+          <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="guardarEmpresa()">Guardar Empresa</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">🔒 Seguridad</span></div>
+    <div class="panel-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="form-grid cols1" style="gap:14px">
+          <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:1px">Cambiar mi contraseña</div>
+          <div class="form-group"><label>Contraseña actual</label><input id="cfg-pass-actual" type="password"></div>
+          <div class="form-group"><label>Contraseña nueva</label><input id="cfg-pass-nueva" type="password"></div>
+          <div class="form-group"><label>Confirmar contraseña nueva</label><input id="cfg-pass-confirmar" type="password"></div>
+          <div id="cfg-pass-err" class="err-msg" style="display:none"></div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="cambiarPassword()">Cambiar Contraseña</button>
+        </div>
+        <div class="form-grid cols1" style="gap:14px">
+          <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:1px">Correo de recuperación</div>
+          <div class="alert-box info"><div class="a-body">Si algún día olvidas tu contraseña, el link "¿Olvidaste tu contraseña?" del login enviará una temporal a este correo.</div></div>
+          <div class="form-group"><label>Correo de recuperación</label><input id="cfg-email-recup" type="email" value="${S.config.emailRecuperacion||''}" placeholder="tucorreo@dominio.com"></div>
+          <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="guardarEmailRecuperacion()">Guardar Correo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">📊 Configuración Actual</span></div>
+    <div class="panel-body">
+      <div class="info-grid">
+        <div class="info-item"><label>Recargo por mora</label><div class="val"><span class="badge b-red">${S.config.porcMora}% sobre valor base</span></div></div>
+        <div class="info-item"><label>Días de gracia</label><div class="val">${S.config.diasGracia} días calendario</div></div>
+        <div class="info-item"><label>Horario de corte</label><div class="val mono">${S.config.horarioCorte} hrs</div></div>
+        <div class="info-item"><label>Ciclo de facturación</label><div class="val">Día 1 → Vence día 20</div></div>
+        <div class="info-item"><label>NIT Empresa</label><div class="val mono">${S.config.nit}</div></div>
+        <div class="info-item"><label>Empresa</label><div class="val">${S.config.empresa}</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function confirmarConfig(){
+  const mora=parseFloat($('cfg-mora').value);
+  const gracia=parseInt($('cfg-gracia').value);
+  const corte=$('cfg-corte').value;
+  const clientes=S.contratos.filter(c=>c.estado==='Activo').length;
+  openModal('Confirmar Cambio de Configuración',`
+    <div class="alert-box warning"><div class="a-title">Impacto estimado</div><div class="a-body">Estos cambios afectarán a <strong>${clientes} clientes activos</strong> a partir del día siguiente. Las facturas ya emitidas NO se modifican.</div></div>
+    <div class="info-grid" style="margin-top:16px">
+      <div class="info-item"><label>Nuevo % mora</label><div class="val" style="color:var(--orange)">${mora}%</div></div>
+      <div class="info-item"><label>Días de gracia</label><div class="val" style="color:var(--orange)">${gracia} días</div></div>
+      <div class="info-item"><label>Horario de corte</label><div class="val mono" style="color:var(--orange)">${corte}</div></div>
+    </div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+     <button class="btn btn-primary" onclick="_guardarConfig(${mora},${gracia},'${corte}')">Confirmar y Guardar</button>`
+  );
+}
+
+function _guardarConfig(mora,gracia,corte){
+  addAudit('Cambio de configuración',`mora: ${S.config.porcMora}%→${mora}% | gracia: ${S.config.diasGracia}d→${gracia}d | corte: ${S.config.horarioCorte}→${corte}`);
+  S.config.porcMora=mora;S.config.diasGracia=gracia;S.config.horarioCorte=corte;
+  toast('Configuración guardada. Aplica desde mañana.','success');
+  closeModal();renderConfig();
+}
+function guardarEmpresa(){
+  S.config.empresa=$('cfg-empresa').value.trim()||S.config.empresa;
+  S.config.nit=$('cfg-nit').value.trim()||S.config.nit;
+  const file=$('cfg-logo').files[0];
+  const terminar=()=>{
+    addAudit('Datos empresa actualizados',`${S.config.empresa} — NIT: ${S.config.nit}`);
+    toast('Datos de empresa guardados','success');
+    aplicarBranding();
+    renderConfig();
+  };
+  if(file){
+    if(file.size>800*1024){toast('La imagen es muy pesada, usa una más pequeña (<800KB)','error');return;}
+    const reader=new FileReader();
+    reader.onload=(e)=>{ S.config.logoBase64=e.target.result; terminar(); };
+    reader.readAsDataURL(file);
+  } else {
+    terminar();
+  }
+}
+
+// Cambia la contraseña del usuario actualmente autenticado (guardado en S.users)
+function cambiarPassword(){
+  const actual=$('cfg-pass-actual').value;
+  const nueva=$('cfg-pass-nueva').value;
+  const confirmar=$('cfg-pass-confirmar').value;
+  const err=$('cfg-pass-err');
+  err.style.display='none';
+  const usr=S.users.find(u=>u.u===S.user.u);
+  if(!usr){err.textContent='No se encontró tu usuario.';err.style.display='block';return;}
+  if(usr.p!==actual){err.textContent='La contraseña actual no es correcta.';err.style.display='block';return;}
+  if(nueva.length<6){err.textContent='La contraseña nueva debe tener mínimo 6 caracteres.';err.style.display='block';return;}
+  if(nueva!==confirmar){err.textContent='La confirmación no coincide con la contraseña nueva.';err.style.display='block';return;}
+  usr.p=nueva;
+  guardarSesion(usr.u,nueva);
+  addAudit('Cambio de contraseña',`Usuario ${usr.u} cambió su contraseña.`);
+  toast('✅ Contraseña actualizada correctamente','success');
+  $('cfg-pass-actual').value='';$('cfg-pass-nueva').value='';$('cfg-pass-confirmar').value='';
+}
+
+function guardarEmailRecuperacion(){
+  const email=$('cfg-email-recup').value.trim();
+  if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){toast('Correo inválido','error');return;}
+  S.config.emailRecuperacion=email;
+  addAudit('Correo de recuperación actualizado',email||'(vacío)');
+  toast('Correo de recuperación guardado','success');
+}
+
+// Aplica el nombre/logo de la empresa en login y sidebar sin recargar la página
+function aplicarBranding(){
+  document.title=`${S.config.empresa} | Sistema de Gestión ISP`;
+  const login=$('login-brand'); const side=$('sb-brand');
+  const html=S.config.logoBase64
+    ?`<img src="${S.config.logoBase64}" style="max-height:38px;max-width:180px;object-fit:contain">`
+    :`<span class="sig">${(S.config.empresa||'MI EMPRESA').toUpperCase()}</span>`;
+  const htmlSide=S.config.logoBase64
+    ?`<img src="${S.config.logoBase64}" style="max-height:26px;max-width:150px;object-fit:contain">`
+    :`<span class="brand">${(S.config.empresa||'MI EMPRESA').toUpperCase()}</span>`;
+  if(login) login.innerHTML=html;
+  if(side) side.innerHTML=htmlSide;
+}
+
+// ═══════════════════════════════ PORTAL CLIENTE ═══════════════════════════════
+function getContratoCliente(){return getContrato(S.user.cId);}
+
+function renderPortal(){
+  const c=getContratoCliente();if(!c){$('content').innerHTML='<div class="empty"><p>Error al cargar datos</p></div>';return;}
+  const pl=getPlan(c.planId);
+  const facVigente=S.facturas.find(f=>f.cId===c.id&&(f.estado==='Pendiente'||f.estado==='Vencida'));
+  const isActive=c.estado==='Activo';
+  const isSuspended=c.estado==='Suspendido por mora';
+  $('content').innerHTML=`
+  ${isSuspended?`<div class="alert-box danger"><div class="a-title">🚫 Servicio Suspendido por Mora</div><div class="a-body">Tiene una factura vencida. Realice el pago en nuestra oficina o contáctenos para reactivar su servicio.<br><strong>Oficina:</strong> Carrera 52 #45-20, Medellín | Lunes–Sábado 8:00–18:00</div></div>`:''}
+  <div class="portal-hero">
+    <div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Plan activo</div>
+      <div class="plan-name">${pl?.nombre||'—'}</div>
+      <div class="plan-speed">⬇ ${pl?.bajada}Mbps bajada &nbsp;·&nbsp; ⬆ ${pl?.subida}Mbps subida</div>
+      <div style="margin-top:10px;font-size:12px;color:var(--text2)">Contrato: <span class="mono">${c.num}</span> &nbsp;·&nbsp; Fecha de instalación: <strong>${c.fecha}</strong></div>
+      ${c.proximoVencimiento?`<div style="margin-top:4px;font-size:12px;color:var(--text2)">Próxima factura se genera automáticamente el: <strong style="color:var(--accent)">${c.proximoVencimiento}</strong></div>`:''}
+    </div>
+    <div style="text-align:right">
+      <div class="status-bubble ${isActive?'active':isSuspended?'suspended':'pending'}">
+        ${isActive?'✅ Servicio Activo':isSuspended?'🚫 Suspendido':'⏳ Pendiente'}
+      </div>
+      ${facVigente?`<div style="margin-top:12px;text-align:center">
+        <div style="font-size:11px;color:var(--text2)">Factura ${facVigente.num}</div>
+        <div style="font-size:22px;font-weight:700;color:${facVigente.estado==='Vencida'?'var(--red)':'var(--accent)'}">${fmt(facturaMonto(facVigente))}</div>
+        <div style="font-size:11px;color:var(--text2)">Vence: ${facVigente.vence} ${facVigente.recargo?'<span style="color:var(--red)">+ recargo mora</span>':''}</div>
+      </div>`:'<div style="margin-top:12px;color:var(--green);font-size:13px">✓ Sin facturas pendientes</div>'}
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px">
+    <div class="kpi-card accent" style="cursor:pointer" onclick="navTo('mis-facturas')"><div class="kpi-label">Mis Facturas</div><div class="kpi-val" style="color:var(--accent)">${S.facturas.filter(f=>f.cId===c.id).length}</div><div class="kpi-sub">Ver y descargar →</div></div>
+    <div class="kpi-card green" style="cursor:pointer" onclick="navTo('mis-pagos')"><div class="kpi-label">Pagos Registrados</div><div class="kpi-val" style="color:var(--green)">${S.pagos.filter(p=>p.cId===c.id).length}</div><div class="kpi-sub">Historial de pagos →</div></div>
+    <div class="kpi-card orange" style="cursor:pointer" onclick="navTo('nuevo-ticket')"><div class="kpi-label">Reportar Incidente</div><div class="kpi-val" style="color:var(--orange)">${S.tickets.filter(t=>t.cId===c.id&&t.estado==='Abierto').length}</div><div class="kpi-sub">Tickets abiertos →</div></div>
+  </div>`;
+}
+
+function renderMisFacturas(){
+  const c=getContratoCliente();
+  const facts=S.facturas.filter(f=>f.cId===c.id).sort((a,b)=>b.periodo.localeCompare(a.periodo));
+  $('content').innerHTML=`
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">Mis Facturas</span></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Factura</th><th>Periodo</th><th>Valor Base</th><th>Recargo</th><th>Total</th><th>Vence</th><th>Estado</th><th>Acción</th></tr></thead>
+      <tbody>${facts.map(f=>`
+        <tr>
+          <td class="mono">${f.num}</td>
+          <td>${f.periodo}</td>
+          <td>${fmt(f.base)}</td>
+          <td style="color:${f.recargo?'var(--red)':'var(--text3)'}">${f.recargo?fmt(f.recargo):'—'}</td>
+          <td style="font-weight:600">${fmt(facturaMonto(f))}</td>
+          <td class="mono" style="font-size:11px">${f.vence}</td>
+          <td>${estadoBadge(f.estado)}${f.estado==='Pagada'?`<div style="font-size:10px;color:var(--text2)">${f.fechaPago}</div>`:''}</td>
+          <td><button class="btn btn-outline btn-sm" onclick="imprimirFactura(${f.id})">🖨️ Imprimir</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+
+function renderMisPagos(){
+  const c=getContratoCliente();
+  const pagos=S.pagos.filter(p=>p.cId===c.id).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  $('content').innerHTML=`
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">Historial de Pagos (últimos 12 meses)</span>
+      <button class="btn btn-outline" onclick="toast('Descargando historial en PDF...','info')">📄 Descargar PDF</button>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Fecha</th><th>Factura</th><th>Periodo</th><th>Monto Pagado</th><th>Recargo</th><th>Medio</th><th>Cajero</th></tr></thead>
+      <tbody>${pagos.map(p=>{
+        const f=S.facturas.find(x=>x.id===p.fId);
+        return `<tr>
+          <td class="mono" style="font-size:11px">${p.fecha}</td>
+          <td class="mono">${f?.num||'—'}</td>
+          <td>${f?.periodo||'—'}</td>
+          <td style="color:var(--green);font-weight:600">${fmt(p.monto)}</td>
+          <td style="color:${f?.recargo?'var(--red)':'var(--text3)'}">${f?.recargo?fmt(f.recargo):'—'}</td>
+          <td><span class="badge b-blue">${p.medio}</span></td>
+          <td style="font-size:11px;color:var(--text2)">${p.cajero}</td>
+        </tr>`;
+      }).join('')}
+      ${pagos.length===0?'<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:28px">Sin pagos registrados</td></tr>':''}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+
+function renderNuevoTicket(){
+  const c=getContratoCliente();
+  const misTickets=S.tickets.filter(t=>t.cId===c.id);
+  if(c.estado==='Suspendido por mora'){
+    $('content').innerHTML=`
+    <div class="alert-box danger"><div class="a-title">🚫 No puedes reportar incidentes</div><div class="a-body">Tu servicio está suspendido por mora. El motivo no es un problema técnico sino el saldo pendiente de pago. Para reactivar tu servicio, visita nuestra oficina o contáctanos.</div></div>`;
+    return;
+  }
+  $('content').innerHTML=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Reportar Incidente Técnico</span></div>
+      <div class="panel-body">
+        <div class="form-grid cols1" style="gap:14px">
+          <div class="form-group"><label>Tipo de Falla *</label>
+            <select id="tk-tipo">
+              <option value="">Seleccione el tipo...</option>
+              <option>Sin señal</option>
+              <option>Velocidad inferior a la contratada</option>
+              <option>Intermitencia / cortes frecuentes</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Descripción del problema *</label>
+            <textarea id="tk-desc" placeholder="Describa el problema con el mayor detalle posible..."></textarea>
+          </div>
+          <div class="form-group"><label>Fecha y hora aproximada de inicio</label>
+            <input id="tk-inicio" type="datetime-local">
+          </div>
+          <div id="tk-err" class="err-msg" style="display:none"></div>
+          <button class="btn btn-primary" style="justify-content:center" onclick="enviarTicket()">📤 Enviar Reporte</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Mis Tickets</span></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Ticket</th><th>Tipo</th><th>Fecha</th><th>Estado</th></tr></thead>
+        <tbody>${misTickets.map(t=>`<tr><td class="mono">${t.num}</td><td style="font-size:12px">${t.tipo}</td><td class="mono" style="font-size:11px">${t.inicio}</td><td>${estadoBadge(t.estado)}${t.estado==='Resuelto'&&t.solucion?`<div style="font-size:10px;color:var(--text2);margin-top:3px">${t.solucion.slice(0,50)}...</div>`:''}</td></tr>`).join('')}
+        ${misTickets.length===0?'<tr><td colspan="4" style="text-align:center;color:var(--text2);padding:24px">Sin tickets reportados</td></tr>':''}</tbody>
+      </table></div>
+    </div>
+  </div>`;
+}
+
+function enviarTicket(){
+  const tipo=$('tk-tipo').value;
+  const desc=$('tk-desc').value.trim();
+  const inicio=$('tk-inicio').value||now();
+  const err=$('tk-err');
+  if(!tipo||!desc){err.textContent='Seleccione el tipo de falla e ingrese una descripción.';err.style.display='block';return;}
+  const c=getContratoCliente();
+  const id=S.nextIds.ticket++;
+  const num=`TKT-${String(id).padStart(3,'0')}`;
+  S.tickets.push({id,num,cId:c.id,tipo,desc,inicio,estado:'Abierto',solucion:''});
+  addAudit('Ticket creado por cliente',`${num} — ${c.num} — ${tipo}`);
+  openModal('✅ Reporte Enviado',`
+    <div style="text-align:center;padding:20px">
+      <div style="font-size:48px">🎫</div>
+      <div style="font-family:'Syne',sans-serif;font-size:22px;margin:12px 0">Ticket Creado</div>
+      <div class="mono" style="font-size:28px;color:var(--accent);font-weight:700">${num}</div>
+      <div style="color:var(--text2);font-size:13px;margin-top:12px">Guarda este número para seguimiento. Nuestro equipo técnico atenderá tu reporte a la brevedad.</div>
+    </div>`,
+    `<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="closeModal();navTo('nuevo-ticket')">Entendido</button>`
+  );
+}
+
+// ═══════════════════════════════ MODAL & TOAST ═══════════════════════════════
+function openModal(title,body,footer=''){
+  $('modal-content').innerHTML=`
+    <div class="modal-head"><span class="modal-title">${title}</span><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">${body}</div>
+    ${footer?`<div class="modal-foot">${footer}</div>`:''}`;
+  $('modal-overlay').classList.add('open');
+}
+function closeModal(){$('modal-overlay').classList.remove('open');}
+
+function toast(msg,type='info'){
+  const el=document.createElement('div');
+  el.className=`toast-item ${type}`;
+  const icons={success:'✅',error:'❌',info:'ℹ️'};
+  el.innerHTML=`<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  $('toast').appendChild(el);
+  setTimeout(()=>el.remove(),4000);
+}
+
+// ═══════════════════════════════ BOOT ═══════════════════════════════
+function timeout(ms){
+  return new Promise((_,rej)=>setTimeout(()=>rej(new Error('TIMEOUT: Firestore no respondió a tiempo (revisa proyecto/reglas/red).')),ms));
+}
+
+window.onload=async ()=>{
+  $('login-screen').style.display='none';
+  try{
+    await Promise.race([loadState(), timeout(15000)]);
+    procesarFacturacionAutomatica();
+    aplicarBranding();
+    if(!restaurarSesion()) $('login-screen').style.display='flex';
+  }catch(e){
+    console.error('Error cargando datos de Firestore:',e);
+    const codigo = e && e.code ? e.code : (e && e.message ? e.message : 'desconocido');
+    document.body.innerHTML=`<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;color:#FF4757;font-family:sans-serif;text-align:center;padding:20px;flex-direction:column;gap:10px">
+      <div>⚠️ No se pudo conectar con la base de datos.</div>
+      <div style="font-size:13px;color:#ccc;font-family:monospace">${codigo}</div>
+      <div style="font-size:13px;color:#ccc;max-width:500px">Revisa: 1) que firebaseConfig tenga tus datos reales (no los de ejemplo), 2) que exista la base Firestore en tu proyecto, 3) las reglas en Firestore → Reglas.</div>
+    </div>`;
+  }
+};
+</script>
+</body>
+</html>

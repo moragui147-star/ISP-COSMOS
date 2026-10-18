@@ -1,0 +1,5 @@
+node_modules
+coverage/
+.DS_Store
+# Credenciales de Firebase: no se versionan
+app/js/firebase-config.js

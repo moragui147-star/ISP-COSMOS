@@ -1,0 +1,3 @@
+# Netlify publica solo la carpeta app/ (la aplicación estática)
+[build]
+  publish = "app"
