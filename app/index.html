@@ -316,6 +316,7 @@ textarea{resize:vertical;min-height:80px;}
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="js/firebase-config.js"></script>
+<script type="module" src="js/app-modulos.js"></script>
 <script>
 // La configuración de Firebase se carga desde js/firebase-config.js (fuera del repositorio)
 const firebaseConfig = window.firebaseConfig;
@@ -323,7 +324,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // Campos de S que se guardan/leen en Firestore (todo excepto sesión/UI)
-const PERSISTED_KEYS = ['planes','contratos','facturas','pagos','tickets','audit','config','users','nextIds','cierreHoy'];
+const PERSISTED_KEYS = ['planes','contratos','facturas','pagos','tickets','audit','config','users','nextIds','cierreHoy','ordenesRetiro'];
 const STATE_DOC = db.collection('isp_data').doc('main');
 
 // Carga el estado desde Firestore. Si el documento no existe (primera vez),
@@ -359,7 +360,7 @@ const S = {
   user: null,
   activeView: '',
   config: {
-    porcMora:5, diasGracia:3, horarioCorte:'00:00',
+    porcMora:5, diasGracia:3, horarioCorte:'00:00', ultimoCorte:null,
     nit:'900.123.456-7', empresa:'Master-Telecomuni', emailRecuperacion:'', logoBase64:''
   },
   planes:[
@@ -406,6 +407,7 @@ const S = {
   ],
   nextIds:{contrato:7,factura:10,pago:5,ticket:3,plan:6},
   cierreHoy:false,
+  ordenesRetiro:[],
   users:[
     {u:'admin',p:'admin123',rol:'admin',nombre:'Administrador'},
   ]
@@ -884,7 +886,7 @@ function guardarContrato(id){
   } else {
     const newId=S.nextIds.contrato++;
     const num=`CT-${String(newId).padStart(3,'0')}`;
-    S.contratos.push({id:newId,num,cedula:ced,nombre:n,dir,apto,tel,email,planId,mac:'',estado:'Pendiente de instalación',fecha:today(),pass,mikrotikIp,mikrotikUser,mikrotikPass,mikrotikInterface,proximoVencimiento:addDias(today(),30)});
+    S.contratos.push({id:newId,num,cedula:ced,nombre:n,dir,apto,tel,email,planId,mac:'',estado:'Pendiente de instalación',periodosDeuda:0,fecha:today(),pass,mikrotikIp,mikrotikUser,mikrotikPass,mikrotikInterface,proximoVencimiento:addDias(today(),30)});
     addAudit('Nuevo contrato',`${num} — ${n}`);
     toast(`Contrato ${num} creado. Registre la MAC para activar.`,'success');
   }
@@ -997,7 +999,7 @@ function procesarArchivoCargaMasiva(){
 
         const newId=S.nextIds.contrato++;
         const num=`CT-${String(newId).padStart(3,'0')}`;
-        S.contratos.push({id:newId,num,cedula,nombre,dir:direccion,apto,tel:telefono,email,planId:plan.id,mac:'',estado:'Pendiente de instalación',fecha:fechaInicio,pass,mikrotikIp,mikrotikUser,mikrotikPass,mikrotikInterface,proximoVencimiento:addDias(fechaInicio,30)});
+        S.contratos.push({id:newId,num,cedula,nombre,dir:direccion,apto,tel:telefono,email,planId:plan.id,mac:'',estado:'Pendiente de instalación',periodosDeuda:0,fecha:fechaInicio,pass,mikrotikIp,mikrotikUser,mikrotikPass,mikrotikInterface,proximoVencimiento:addDias(fechaInicio,30)});
         creados++;
       });
       if(creados>0) addAudit('Carga masiva de contratos',`${creados} contrato(s) creado(s) desde archivo "${file.name}".`);
@@ -2098,6 +2100,22 @@ function toast(msg,type='info'){
 }
 
 // ═══════════════════════════════ BOOT ═══════════════════════════════
+// SCRUM-11: todo contrato debe tener periodosDeuda entero 0..2.
+// Los contratos creados antes de v1.1 no tienen el campo (undefined) y se inicializan.
+function migrarPeriodosDeuda(){
+  if(!window.ISP) return;
+  if(!Array.isArray(S.ordenesRetiro)) S.ordenesRetiro=[];
+  let cambios=0;
+  S.contratos.forEach(c=>{
+    const {valor,anomalia}=window.ISP.normalizarContador(c.periodosDeuda);
+    if(anomalia){ c.periodosDeuda=valor; cambios++; }
+  });
+  if(cambios>0){
+    S.audit.unshift({id:Date.now(),usuario:'Sistema',fecha:now(),accion:'Migración periodosDeuda',detalle:`${cambios} contrato(s) inicializados con periodosDeuda normalizado (SCRUM-11).`});
+    saveState();
+  }
+}
+
 function timeout(ms){
   return new Promise((_,rej)=>setTimeout(()=>rej(new Error('TIMEOUT: Firestore no respondió a tiempo (revisa proyecto/reglas/red).')),ms));
 }
@@ -2106,6 +2124,7 @@ window.onload=async ()=>{
   $('login-screen').style.display='none';
   try{
     await Promise.race([loadState(), timeout(15000)]);
+    migrarPeriodosDeuda();
     procesarFacturacionAutomatica();
     aplicarBranding();
     if(!restaurarSesion()) $('login-screen').style.display='flex';
